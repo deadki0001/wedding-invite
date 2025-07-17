@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding Invite Login</title>
+  <style>
+    :root {
+      --blush: #f8cfd5;
+      --rose: #d46a7c;
+      --burgundy: #7b1e3b;
+      --gold: #d4af37;
+      --white: #fff;
+      --soft-pink: #fbeaea;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(270deg, var(--blush), var(--rose), var(--burgundy), var(--gold));
+      background-size: 800% 800%;
+      animation: gradientBG 20s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .login-card {
+      background-image: url("assets/ring-hand.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+      backdrop-filter: blur(6px);
+    }
+
+    h2 {
+      margin-bottom: 1.5rem;
+      color: var(--burgundy);
+      font-size: 1.6rem;
+    }
+
+    h2 span {
+      margin-left: 8px;
+      font-size: 1.2rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid var(--rose);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--burgundy);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background-color: var(--rose);
+    }
+
+    .footer-note {
+      margin-top: 1.5rem;
+      color: var(--rose);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h2>You're Invited ✨ <span>🚀</span></h2>
+    <form onsubmit="handleLogin(event)">
+      <input type="text" placeholder="Cellphone Number" required />
+      <input type="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+    <div class="footer-note">Made with love for our special day 💍</div>
+  </div>
+
+  <script>
+    function handleLogin(event) {
+      event.preventDefault();
+      // Placeholder login logic — backend will come later
+      alert("Login submitted. Backend will validate later.");
+    }
+  </script>
+</body>
+</html>
