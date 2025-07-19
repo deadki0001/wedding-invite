@@ -81,6 +81,7 @@
       border-radius: 8px;
       font-size: 1rem;
       background: rgba(255, 255, 255, 0.9);
+      box-sizing: border-box;
     }
 
     input:focus {
@@ -100,6 +101,7 @@
       cursor: pointer;
       margin-top: 1rem;
       transition: all 0.3s ease;
+      box-sizing: border-box;
     }
 
     button:hover {
@@ -126,6 +128,17 @@
       margin: 1rem 0;
       font-size: 0.9rem;
       display: none;
+    }
+
+    .success-message {
+      color: var(--gold);
+      background: rgba(212, 175, 55, 0.1);
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      display: none;
+      border: 1px solid var(--gold);
     }
 
     .loading {
@@ -160,10 +173,36 @@
       margin: 1rem 0;
       font-size: 0.8rem;
       color: var(--burgundy);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .test-info:hover {
+      background: rgba(212, 175, 55, 0.2);
+      transform: scale(1.02);
     }
 
     .test-info h4 {
       margin-bottom: 0.5rem;
+      color: var(--gold);
+    }
+
+    /* Add a direct link option for testing */
+    .debug-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .debug-link {
+      color: var(--burgundy);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .debug-link:hover {
       color: var(--gold);
     }
   </style>
@@ -173,8 +212,8 @@
     <h2>You're Invited ✨ <span>🚀</span></h2>
     
     <!-- Test user info -->
-    <div class="test-info">
-      <h4>🧪 Test Login</h4>
+    <div class="test-info" onclick="fillTestCredentials()">
+      <h4>🧪 Test Login (Click to fill)</h4>
       <p><strong>Phone:</strong> +27641234567</p>
       <p><strong>Password:</strong> ADMIN123</p>
     </div>
@@ -186,29 +225,47 @@
     </form>
     
     <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    
+    <!-- Debug section for testing -->
+    <div class="debug-section">
+      <p>🔧 Testing? <a href="main.html" class="debug-link">Go directly to main page</a></p>
+      <p style="font-size: 0.7rem; color: #666;">Note: This bypasses login for testing purposes</p>
+    </div>
+    
     <div class="footer-note">Made with love for our special day💍</div>
   </div>
 
   <a href="admin.html" class="admin-link">🔒 Admin Panel</a>
 
   <script>
+    function fillTestCredentials() {
+      document.getElementById('phone').value = '+27641234567';
+      document.getElementById('password').value = 'ADMIN123';
+    }
+
     async function handleLogin(event) {
       event.preventDefault();
       
       const phone = document.getElementById('phone').value;
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('errorMessage');
+      const successDiv = document.getElementById('successMessage');
       const loginBtn = document.getElementById('loginBtn');
       const form = document.getElementById('loginForm');
       
-      // Clear previous errors
+      // Clear previous messages
       errorDiv.style.display = 'none';
+      successDiv.style.display = 'none';
       
       // Show loading state
       loginBtn.innerHTML = '🔄 Logging in...';
       form.classList.add('loading');
+      loginBtn.disabled = true;
       
       try {
+        console.log('Attempting login for:', phone);
+        
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
@@ -217,31 +274,57 @@
           body: JSON.stringify({ phone, password })
         });
         
-        const result = await response.json();
+        console.log('Response status:', response.status);
         
-        if (result.success) {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Login result:', result);
+        
+        if (result.success && result.guest) {
           // Store guest data in sessionStorage
           sessionStorage.setItem('currentGuest', JSON.stringify(result.guest));
           
-          // Success animation
+          // Success feedback
           loginBtn.innerHTML = '✅ Success!';
           loginBtn.style.background = 'var(--gold)';
+          successDiv.textContent = `Welcome ${result.guest.name}! Redirecting...`;
+          successDiv.style.display = 'block';
+          
+          console.log('Login successful, redirecting to main.html');
           
           // Redirect to main page after short delay
           setTimeout(() => {
             window.location.href = 'main.html';
-          }, 1000);
+          }, 1500);
           
         } else {
           // Show error
-          errorDiv.textContent = result.error || 'Login failed';
+          const errorMsg = result.error || 'Login failed - Invalid credentials';
+          errorDiv.textContent = errorMsg;
           errorDiv.style.display = 'block';
+          console.log('Login failed:', errorMsg);
           resetLoginButton();
         }
         
       } catch (error) {
         console.error('Login error:', error);
-        errorDiv.textContent = 'Connection error. Please try again.';
+        
+        // Check if this is a connection error (backend not running)
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorDiv.innerHTML = `
+            <strong>⚠️ Backend Connection Error</strong><br>
+            The server appears to be down. For testing, you can:<br>
+            <a href="main.html" style="color: var(--gold); text-decoration: underline;">
+              Continue to main page anyway
+            </a>
+          `;
+        } else {
+          errorDiv.textContent = 'Connection error. Please try again.';
+        }
+        
         errorDiv.style.display = 'block';
         resetLoginButton();
       }
@@ -253,6 +336,7 @@
       
       loginBtn.innerHTML = 'Login';
       loginBtn.style.background = 'var(--burgundy)';
+      loginBtn.disabled = false;
       form.classList.remove('loading');
     }
 
@@ -260,18 +344,39 @@
     window.onload = function() {
       const currentGuest = sessionStorage.getItem('currentGuest');
       if (currentGuest) {
+        console.log('User already logged in, redirecting to main page');
         // User is already logged in, redirect to main page
+        window.location.href = 'main.html';
+      }
+      
+      console.log('Login page loaded');
+      
+      // For testing: Create a mock guest if none exists and we're testing
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('test') === 'true') {
+        const mockGuest = {
+          name: 'Test User',
+          phone: '+27641234567',
+          rsvp_status: 'pending'
+        };
+        sessionStorage.setItem('currentGuest', JSON.stringify(mockGuest));
         window.location.href = 'main.html';
       }
     };
 
-    // Auto-fill test credentials for testing
-    document.addEventListener('DOMContentLoaded', function() {
-      const testInfo = document.querySelector('.test-info');
-      testInfo.addEventListener('click', function() {
-        document.getElementById('phone').value = '+27641234567';
-        document.getElementById('password').value = 'ADMIN123';
-      });
+    // Add keyboard shortcut for testing
+    document.addEventListener('keydown', function(e) {
+      // Ctrl+Shift+T to go directly to main page for testing
+      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+        console.log('Test shortcut activated');
+        const mockGuest = {
+          name: 'Test User',
+          phone: '+27641234567',
+          rsvp_status: 'pending'
+        };
+        sessionStorage.setItem('currentGuest', JSON.stringify(mockGuest));
+        window.location.href = 'main.html';
+      }
     });
   </script>
 </body>
