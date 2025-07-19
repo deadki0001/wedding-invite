@@ -1,4 +1,3 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,28 +45,43 @@
 
   <script>
     async function loadGuests() {
-      const res = await fetch("/api/guests");
-      const guests = await res.json();
-      const tbody = document.querySelector("#guestTable tbody");
-      tbody.innerHTML = "";
+      console.log("🔄 Loading guest list...");
+      try {
+        const res = await fetch("/api/guests");
+        const guests = await res.json();
+        const tbody = document.querySelector("#guestTable tbody");
+        tbody.innerHTML = "";
 
-      guests.forEach(g => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${g.name}</td>
-          <td>${g.phone}</td>
-          <td>${g.invite_sent ? "✅" : "❌"}</td>
-          <td><button onclick="sendInvite(${g.id})">Send</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
+        guests.forEach(g => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${g.name}</td>
+            <td>${g.phone}</td>
+            <td>${g.invite_sent ? "✅" : "❌"}</td>
+            <td><button onclick="sendInvite(${g.id})">Send</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        console.log("✅ Guest list loaded.");
+      } catch (error) {
+        console.error("❌ Failed to load guests:", error);
+        alert("Failed to load guest list.");
+      }
     }
 
     async function sendInvite(id) {
-      const res = await fetch(`/api/send_invite/${id}`, { method: "POST" });
-      const msg = await res.json();
-      alert(msg.message || msg.error);
-      loadGuests();
+      console.log(`📨 Sending invite for guest ID ${id}...`);
+      try {
+        const res = await fetch(`/api/send_invite/${id}`, { method: "POST" });
+        const msg = await res.json();
+        console.log("📬 Response:", msg);
+        alert(msg.message || msg.error);
+        loadGuests();
+      } catch (error) {
+        console.error("❌ Failed to send invite:", error);
+        alert("Failed to send invite.");
+      }
     }
 
     document.getElementById("addGuestForm").onsubmit = async (e) => {
@@ -75,15 +89,23 @@
       const name = document.getElementById("name").value;
       const phone = document.getElementById("phone").value;
 
-      const res = await fetch("/api/add_guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone })
-      });
+      console.log("➕ Adding guest:", { name, phone });
 
-      const msg = await res.json();
-      alert(msg.message || msg.error);
-      loadGuests();
+      try {
+        const res = await fetch("/api/add_guest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, phone })
+        });
+
+        const msg = await res.json();
+        console.log("📝 Response:", msg);
+        alert(msg.message || msg.error);
+        loadGuests();
+      } catch (error) {
+        console.error("❌ Failed to add guest:", error);
+        alert("Failed to add guest.");
+      }
     };
 
     loadGuests();
