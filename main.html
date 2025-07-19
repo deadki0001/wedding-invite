@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Wedding Celebration</title>
+    <style>
+        :root {
+            --blush: #f8cfd5;
+            --rose: #d46a7c;
+            --burgundy: #7b1e3b;
+            --gold: #d4af37;
+            --white: #fff;
+            --soft-pink: #fbeaea;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--soft-pink), var(--blush));
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header Carousel */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .carousel {
+            display: flex;
+            width: 500%;
+            height: 100%;
+            animation: slideTop 15s infinite;
+        }
+
+        .carousel.bottom {
+            animation: slideBottom 18s infinite reverse;
+        }
+
+        .carousel-item {
+            width: 20%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        .carousel-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(123, 30, 59, 0.2);
+        }
+
+        @keyframes slideTop {
+            0%, 20% { transform: translateX(0); }
+            25%, 45% { transform: translateX(-20%); }
+            50%, 70% { transform: translateX(-40%); }
+            75%, 95% { transform: translateX(-60%); }
+            100% { transform: translateX(-80%); }
+        }
+
+        @keyframes slideBottom {
+            0%, 20% { transform: translateX(-80%); }
+            25%, 45% { transform: translateX(-60%); }
+            50%, 70% { transform: translateX(-40%); }
+            75%, 95% { transform: translateX(-20%); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .welcome-message {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-message h1 {
+            color: var(--burgundy);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .welcome-message p {
+            color: var(--rose);
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .guest-name {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        /* RSVP Section */
+        .rsvp-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+        }
+
+        .rsvp-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .rsvp-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        .rsvp-btn.accept {
+            background: var(--gold);
+            color: white;
+        }
+
+        .rsvp-btn.decline {
+            background: var(--rose);
+            color: white;
+        }
+
+        .rsvp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .rsvp-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Wedding Details */
+        .wedding-details {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+        }
+
+        .detail-item {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid var(--gold);
+        }
+
+        .detail-item h3 {
+            color: var(--burgundy);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item p {
+            color: var(--rose);
+        }
+
+        /* Bottom Carousel */
+        .bottom-carousel {
+            margin-top: 3rem;
+            height: 250px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        /* Floating Hearts */
+        .heart {
+            position: fixed;
+            color: var(--rose);
+            font-size: 20px;
+            pointer-events: none;
+            animation: float 6s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Logout button */
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--burgundy);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--rose);
+            transform: scale(1.05);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .carousel-container {
+                height: 200px;
+            }
+            
+            .bottom-carousel {
+                height: 180px;
+            }
+            
+            .welcome-message h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .rsvp-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+
+    <!-- Top Carousel -->
+    <div class="carousel-container">
+        <div class="carousel" id="topCarousel">
+            <div class="carousel-item" style="background-image: url('assets/wedding1.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/wedding2.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/wedding3.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/wedding4.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/wedding5.jpg')"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="welcome-message">
+            <h1>💍 Welcome to Our Wedding! 🚀</h1>
+            <p>Hello <span class="guest-name" id="guestName">Beautiful Soul</span>!</p>
+            <p>We're absolutely thrilled to have you join us for the most epic wedding celebration this galaxy has ever seen! ✨</p>
+            <p>Get ready for a night filled with love, laughter, dancing, and memories that will last a lifetime! 🎉</p>
+        </div>
+
+        <div class="rsvp-section">
+            <h2 style="color: var(--burgundy); margin-bottom: 1rem;">📝 RSVP</h2>
+            <p style="color: var(--rose);">Will you be joining us on our special day?</p>
+            <div class="rsvp-buttons">
+                <button class="rsvp-btn accept" onclick="rsvp('accepted')">✅ Yes, I'll be there!</button>
+                <button class="rsvp-btn decline" onclick="rsvp('declined')">❌ Sorry, can't make it</button>
+            </div>
+            <div id="rsvpStatus" style="margin-top: 1rem; font-weight: bold;"></div>
+        </div>
+
+        <div class="wedding-details">
+            <h2 style="color: var(--burgundy); margin-bottom: 1rem;">📅 Wedding Details</h2>
+            <div class="detail-item">
+                <h3>📍 Venue</h3>
+                <p>The Spectacular Galaxy Gardens<br>123 Starlight Avenue, Cape Town</p>
+            </div>
+            <div class="detail-item">
+                <h3>📅 Date & Time</h3>
+                <p>Saturday, August 12th, 2025<br>4:00 PM - Late Night</p>
+            </div>
+            <div class="detail-item">
+                <h3>👗 Dress Code</h3>
+                <p>Formal / Cocktail Attire<br>Feel free to add some sparkle! ✨</p>
+            </div>
+            <div class="detail-item">
+                <h3>🎁 Registry</h3>
+                <p>Your presence is our present!<br>But if you insist, we're registered at Galaxy Gifts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Carousel -->
+    <div class="carousel-container bottom-carousel">
+        <div class="carousel bottom" id="bottomCarousel">
+            <div class="carousel-item" style="background-image: url('assets/couple1.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/couple2.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/couple3.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/couple4.jpg')"></div>
+            <div class="carousel-item" style="background-image: url('assets/couple5.jpg')"></div>
+        </div>
+    </div>
+
+    <!-- Audio element for wedding music -->
+    <audio id="weddingMusic" loop>
+        <source src="assets/wedding-song.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        let currentGuest = null;
+
+        // Initialize page when loaded
+        window.onload = function() {
+            // Get guest data from sessionStorage or redirect to login
+            const guestData = sessionStorage.getItem('currentGuest');
+            if (!guestData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentGuest = JSON.parse(guestData);
+            document.getElementById('guestName').textContent = currentGuest.name;
+            
+            // Update RSVP status display
+            updateRSVPStatus();
+
+            // Play wedding music
+            playWeddingMusic();
+
+            // Start floating hearts animation
+            startFloatingHearts();
+        };
+
+        function playWeddingMusic() {
+            const audio = document.getElementById('weddingMusic');
+            audio.volume = 0.3; // Set to 30% volume
+            
+            // Try to play audio (modern browsers require user interaction)
+            audio.play().catch(function(error) {
+                console.log('Audio autoplay prevented:', error);
+                // Show a subtle button to enable music
+                showMusicButton();
+            });
+        }
+
+        function showMusicButton() {
+            const musicBtn = document.createElement('button');
+            musicBtn.innerHTML = '🎵 Enable Music';
+            musicBtn.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: var(--gold);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                z-index: 1000;
+            `;
+            musicBtn.onclick = function() {
+                document.getElementById('weddingMusic').play();
+                musicBtn.remove();
+            };
+            document.body.appendChild(musicBtn);
+        }
+
+        function startFloatingHearts() {
+            setInterval(function() {
+                createFloatingHeart();
+            }, 2000);
+        }
+
+        function createFloatingHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = Math.random() > 0.5 ? '💕' : '💖';
+            heart.style.left = Math.random() * window.innerWidth + 'px';
+            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            document.body.appendChild(heart);
+
+            // Remove heart after animation
+            setTimeout(() => {
+                heart.remove();
+            }, 7000);
+        }
+
+        async function rsvp(status) {
+            if (!currentGuest) return;
+
+            try {
+                const response = await fetch('/api/rsvp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: currentGuest.phone,
+                        status: status
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentGuest.rsvp_status = status;
+                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+                    updateRSVPStatus();
+                    
+                    if (status === 'accepted') {
+                        showConfetti();
+                        alert('🎉 Fantastic! We can\'t wait to celebrate with you!');
+                    } else {
+                        alert('💔 We\'ll miss you! Hope to see you at the next celebration!');
+                    }
+                } else {
+                    alert('Error updating RSVP: ' + result.error);
+                }
+            } catch (error) {
+                console.error('RSVP Error:', error);
+                alert('Failed to update RSVP. Please try again.');
+            }
+        }
+
+        function updateRSVPStatus() {
+            const statusDiv = document.getElementById('rsvpStatus');
+            if (currentGuest.rsvp_status === 'accepted') {
+                statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
+                statusDiv.style.color = 'var(--gold)';
+            } else if (currentGuest.rsvp_status === 'declined') {
+                statusDiv.innerHTML = '❌ You\'ll be missed!';
+                statusDiv.style.color = 'var(--rose)';
+            } else {
+                statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
+                statusDiv.style.color = 'var(--burgundy)';
+            }
+        }
+
+        function showConfetti() {
+            // Simple confetti effect with emojis
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    createConfetti();
+                }, i * 100);
+            }
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            const emojis = ['🎉', '🎊', '✨', '💫', '🌟', '💍', '💕'];
+            confetti.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+            confetti.style.cssText = `
+                position: fixed;
+                top: -50px;
+                left: ${Math.random() * window.innerWidth}px;
+                font-size: 24px;
+                pointer-events: none;
+                animation: fall ${Math.random() * 2 + 3}s linear forwards;
+                z-index: 1000;
+            `;
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 5000);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('currentGuest');
+            window.location.href = 'index.html';
+        }
+
+        // Add falling animation for confetti
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
