@@ -139,6 +139,7 @@ def send_authkey_message(phone, message):
         return False
 
 def send_wasender_message(phone, message):
+    """Enhanced WasenderAPI implementation with better error handling"""
     try:
         config = PROVIDERS['wasender']
         api_key = config['api_key']
@@ -149,32 +150,113 @@ def send_wasender_message(phone, message):
 
         clean_phone = phone.replace('+', '').replace('-', '').replace(' ', '')
 
-        payload = {"to": clean_phone, "text": message}
-        headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
-        api_url = config['api_url']
+        # Try multiple endpoint formats and payload structures
+        endpoints_to_try = [
+            {
+                'url': 'https://www.wasenderapi.com/api/send-message',
+                'payload': {"to": clean_phone, "text": message}
+            },
+            {
+                'url': 'https://api.wasenderapi.com/v1/send-message', 
+                'payload': {"to": clean_phone, "text": message}
+            },
+            {
+                'url': 'https://www.wasenderapi.com/api/send-message',
+                'payload': {"to": clean_phone, "message": message}
+            },
+            {
+                'url': 'https://wasenderapi.com/api/v1/messages/send',
+                'payload': {"phone": clean_phone, "text": message}
+            }
+        ]
 
-        logger.info(f"📱 Sending via WasenderAPI to {clean_phone}")
-        response = requests.post(api_url, json=payload, headers=headers)
-        logger.info(f"📊 Response status: {response.status_code}")
-        logger.info(f"📊 Response body: {response.text}")
+        headers = {
+            'Authorization': f'Bearer {api_key}', 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
 
-        if response.status_code == 200:
+        for i, endpoint in enumerate(endpoints_to_try):
             try:
-                result = response.json()
-                logger.info(f"✅ WasenderAPI message sent: {result}")
-                return True
-            except json.JSONDecodeError:
-                if 'success' in response.text.lower():
-                    logger.info("✅ WasenderAPI message sent (plain text)")
-                    return True
+                api_url = endpoint['url']
+                payload = endpoint['payload']
+                
+                logger.info(f"📱 Attempt {i+1}: Sending via WasenderAPI to {clean_phone}")
+                logger.info(f"🔧 Using URL: {api_url}")
+                logger.info(f"🔧 Payload: {payload}")
+                
+                response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+                logger.info(f"📊 Response status: {response.status_code}")
+                logger.info(f"📊 Response headers: {dict(response.headers)}")
+                logger.info(f"📊 Response body: {response.text[:500]}...")
+
+                # Check if response is HTML (error page)
+                content_type = response.headers.get('content-type', '')
+                if content_type.startswith('text/html'):
+                    logger.warning(f"⚠️ Endpoint {i+1} returned HTML instead of JSON")
+                    logger.warning(f"⚠️ HTML content preview: {response.text[:200]}...")
+                    
+                    # Log specific HTML error types
+                    html_lower = response.text.lower()
+                    if "unauthorized" in html_lower or "login" in html_lower:
+                        logger.error("❌ Authentication issue detected in HTML response")
+                    elif "not found" in html_lower or "404" in html_lower:
+                        logger.error("❌ Endpoint not found (404) in HTML response")
+                    elif "rate limit" in html_lower or "too many" in html_lower:
+                        logger.error("❌ Rate limiting detected in HTML response")
+                    
+                    continue  # Try next endpoint
+
+                if response.status_code == 200:
+                    try:
+                        result = response.json()
+                        logger.info(f"✅ WasenderAPI message sent successfully: {result}")
+                        return True
+                    except json.JSONDecodeError as e:
+                        logger.warning(f"⚠️ Failed to parse JSON: {e}")
+                        logger.info(f"📄 Raw response: {response.text}")
+                        
+                        # Check for success indicators in plain text
+                        success_indicators = ['success', 'sent', 'delivered', 'queued', 'accepted']
+                        if any(indicator in response.text.lower() for indicator in success_indicators):
+                            logger.info("✅ WasenderAPI message sent (detected success in plain text)")
+                            return True
+                        else:
+                            logger.warning("⚠️ No success indicators found in response")
+                            continue
+                            
+                elif response.status_code == 401:
+                    logger.error("❌ WasenderAPI: Unauthorized (401) - Check API key")
+                    continue
+                elif response.status_code == 403:
+                    logger.error("❌ WasenderAPI: Forbidden (403) - Check permissions or WhatsApp session")
+                    continue
+                elif response.status_code == 404:
+                    logger.error(f"❌ WasenderAPI: Not Found (404) - Endpoint {api_url} doesn't exist")
+                    continue
+                elif response.status_code == 429:
+                    logger.error("❌ WasenderAPI: Rate limited (429)")
+                    continue
                 else:
-                    logger.error(f"❌ WasenderAPI unexpected response: {response.text}")
-                    return False
-        else:
-            logger.error(f"❌ WasenderAPI HTTP error: {response.status_code}")
-            return False
+                    logger.error(f"❌ WasenderAPI HTTP error {response.status_code}: {response.text}")
+                    continue
+                    
+            except requests.exceptions.Timeout:
+                logger.error(f"❌ Endpoint {i+1} timed out")
+                continue
+            except requests.exceptions.ConnectionError as e:
+                logger.error(f"❌ Endpoint {i+1} connection error: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"❌ Endpoint {i+1} exception: {e}")
+                continue
+
+        # If we get here, all endpoints failed
+        logger.error("❌ All WasenderAPI endpoints failed")
+        return False
+        
     except Exception as e:
-        logger.error(f"❌ WasenderAPI exception: {e}", exc_info=True)
+        logger.error(f"❌ WasenderAPI general exception: {e}", exc_info=True)
         return False
 
 def send_twilio_message(phone, message):
@@ -375,6 +457,101 @@ def test_whatsapp():
             return jsonify({"error": "Twilio not fully configured"})
 
     return jsonify({"error": f"Unknown provider: {WHATSAPP_PROVIDER}"})
+
+@app.route("/api/test_whatsapp_detailed", methods=["GET"])
+def test_whatsapp_detailed():
+    """Enhanced diagnostic endpoint for WasenderAPI"""
+    logger.info(f"🧪 Detailed testing {WHATSAPP_PROVIDER} configuration...")
+    
+    if WHATSAPP_PROVIDER != 'wasender':
+        return jsonify({"error": "This detailed test is for WasenderAPI only"})
+    
+    config = PROVIDERS.get('wasender', {})
+    api_key = config.get('api_key')
+    api_url = config.get('api_url')
+    
+    if not api_key:
+        return jsonify({"error": "WasenderAPI API key not configured"})
+    
+    # Test multiple endpoints
+    test_results = []
+    endpoints_to_test = [
+        'https://www.wasenderapi.com/api/send-message',
+        'https://api.wasenderapi.com/v1/send-message',
+        'https://wasenderapi.com/api/v1/messages/send',
+        'https://www.wasenderapi.com/api/status'
+    ]
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    for endpoint in endpoints_to_test:
+        try:
+            response = requests.get(endpoint, headers=headers, timeout=10)
+            
+            result = {
+                "endpoint": endpoint,
+                "status_code": response.status_code,
+                "content_type": response.headers.get('content-type', 'unknown'),
+                "is_html": response.headers.get('content-type', '').startswith('text/html'),
+                "response_preview": response.text[:100] + "..." if len(response.text) > 100 else response.text
+            }
+            
+            if result["is_html"]:
+                result["issue"] = "Returns HTML instead of JSON - possible auth issue"
+            elif response.status_code == 200:
+                result["status"] = "✅ Accessible"
+            elif response.status_code == 401:
+                result["issue"] = "❌ Unauthorized - check API key"
+            elif response.status_code == 404:
+                result["issue"] = "❌ Not found - endpoint may not exist"
+            else:
+                result["issue"] = f"❌ HTTP {response.status_code}"
+                
+            test_results.append(result)
+            
+        except Exception as e:
+            test_results.append({
+                "endpoint": endpoint,
+                "error": str(e),
+                "issue": "❌ Connection failed"
+            })
+    
+    return jsonify({
+        "provider": "WasenderAPI",
+        "api_key_configured": "✅ Yes",
+        "configured_url": api_url,
+        "endpoint_tests": test_results,
+        "recommendations": [
+            "Check if your WhatsApp session is connected in WasenderAPI dashboard",
+            "Verify your API key is active and not expired", 
+            "Ensure your account has sufficient credits/is not suspended",
+            "Try reconnecting your WhatsApp session if endpoints return HTML"
+        ]
+    })
+
+@app.route("/api/test_send", methods=["POST"])
+def test_send():
+    """Test sending a message to a specific number"""
+    data = request.get_json()
+    phone = data.get('phone')
+    
+    if not phone:
+        return jsonify({"error": "Phone number required"}), 400
+    
+    phone = normalize_phone(phone)
+    test_message = "🧪 Test message from wedding invitation system. If you receive this, the system is working!"
+    
+    logger.info(f"🧪 Sending test message to {phone}")
+    success = send_whatsapp_message(phone, test_message)
+    
+    if success:
+        return jsonify({"success": True, "message": f"Test message sent to {phone}"})
+    else:
+        return jsonify({"success": False, "error": "Failed to send test message"}), 500
 
 if __name__ == "__main__":
     logger.info("🚀 Starting Multi-Provider Wedding Invitation Backend...")
