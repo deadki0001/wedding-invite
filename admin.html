@@ -318,3 +318,318 @@
         </div>
         
         <!-- Add Guest Form -->
+        <h2>➕ Add New Guest</h2>
+        <form id="guestForm" onsubmit="addGuest(event)">
+            <div class="form-group">
+                <label for="guestName">Guest Name:</label>
+                <input type="text" id="guestName" required placeholder="Enter guest name">
+            </div>
+            <div class="form-group">
+                <label for="guestPhone">Phone Number (with country code):</label>
+                <input type="tel" id="guestPhone" required placeholder="+27641234567">
+            </div>
+            <button type="submit" class="button">➕ Add Guest</button>
+        </form>
+        
+        <!-- Guests List -->
+        <h2>📋 Guest List</h2>
+        <div style="overflow-x: auto;">
+            <table class="guests-table" id="guestsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Name</th>
+                        <th style="width: 18%;">Phone</th>
+                        <th style="width: 12%;">Password</th>
+                        <th style="width: 15%;">Invite Status</th>
+                        <th style="width: 15%;">RSVP</th>
+                        <th style="width: 20%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="guestsTableBody">
+                    <tr><td colspan="6">Loading guests...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Message Log -->
+        <h2>📞 Message Log</h2>
+        <div id="messageLog" class="message-log">
+            Ready to send invites...<br>
+        </div>
+    </div>
+
+    <script>
+        let guests = [];
+        let providerInfo = {};
+
+        // Check provider status on load
+        async function checkProviderStatus() {
+            try {
+                const response = await fetch('/api/test_whatsapp');
+                const result = await response.json();
+                const statusDiv = document.getElementById('providerStatus');
+                
+                if (result.error) {
+                    statusDiv.className = 'provider-status error';
+                    statusDiv.innerHTML = `
+                        <h3>❌ ${result.error}</h3>
+                        <p>Please configure your WhatsApp provider in the .env file</p>
+                        <p><small>You can still add guests - just can't send messages yet.</small></p>
+                    `;
+                } else {
+                    statusDiv.className = 'provider-status success';
+                    providerInfo = result;
+                    statusDiv.innerHTML = `
+                        <h3>✅ ${result.status}</h3>
+                        <p><strong>Provider:</strong> ${result.provider}</p>
+                        <p><strong>Pricing:</strong> ${result.pricing || result.free_messages || 'N/A'}</p>
+                        <p><strong>API Key:</strong> ${result.api_key || 'Not set'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Provider check failed:', error);
+                const statusDiv = document.getElementById('providerStatus');
+                statusDiv.className = 'provider-status error';
+                statusDiv.innerHTML = `
+                    <h3>❌ Connection Error</h3>
+                    <p>Could not check provider status. Backend may be down.</p>
+                    <p><small>You can still add guests manually.</small></p>
+                `;
+            }
+        }
+
+        // Load guests from API
+        async function loadGuests() {
+            try {
+                logMessage('📋 Loading guests...');
+                const response = await fetch('/api/guests');
+                guests = await response.json();
+                updateStats();
+                updateGuestsTable();
+                logMessage(`📋 Loaded ${guests.length} guests`);
+            } catch (error) {
+                logMessage(`❌ Failed to load guests: ${error.message}`);
+                console.error('Failed to load guests:', error);
+                // Show empty state
+                const tbody = document.getElementById('guestsTableBody');
+                tbody.innerHTML = '<tr><td colspan="6">❌ Failed to load guests. Check if backend is running.</td></tr>';
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalGuests').textContent = guests.length;
+            document.getElementById('invitesSent').textContent = guests.filter(g => g.invite_sent).length;
+            document.getElementById('rsvpAccepted').textContent = guests.filter(g => g.rsvp_status === 'accepted').length;
+            document.getElementById('rsvpDeclined').textContent = guests.filter(g => g.rsvp_status === 'declined').length;
+            document.getElementById('rsvpPending').textContent = guests.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
+        }
+
+        // Update guests table
+        function updateGuestsTable() {
+            const tbody = document.getElementById('guestsTableBody');
+            if (guests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No guests added yet. Add your first guest above! 🎉</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = guests.map(guest => `
+                <tr>
+                    <td title="${guest.name}">${guest.name}</td>
+                    <td title="${guest.phone}">${guest.phone}</td>
+                    <td><code>${guest.password || 'N/A'}</code></td>
+                    <td>
+                        <span class="status-badge ${guest.invite_sent ? 'invite-sent' : 'invite-not-sent'}">
+                            ${guest.invite_sent ? '✅ Sent' : '⏳ Pending'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${guest.rsvp_status || 'pending'}">
+                            ${guest.rsvp_status === 'accepted' ? '✅ Yes' : 
+                              guest.rsvp_status === 'declined' ? '❌ No' : '⏳ Pending'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="button ${guest.invite_sent ? 'warning' : 'success'}" 
+                                onclick="sendInvite(${guest.id})"
+                                style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                            ${guest.invite_sent ? '🔄 Resend' : '📱 Send'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Add new guest
+        async function addGuest(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('guestName').value.trim();
+            const phone = document.getElementById('guestPhone').value.trim();
+            
+            if (!name || !phone) {
+                alert('Please enter both name and phone number');
+                return;
+            }
+            
+            logMessage(`➕ Adding guest: ${name} - ${phone}...`);
+            
+            try {
+                const response = await fetch('/api/add_guest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    logMessage(`✅ Added guest: ${name} - Password: ${result.password}`);
+                    document.getElementById('guestForm').reset();
+                    await loadGuests();
+                    alert(`✅ Guest added successfully!\nName: ${name}\nPassword: ${result.password}`);
+                } else {
+                    logMessage(`❌ Failed to add guest: ${result.error}`);
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (error) {
+                logMessage(`❌ Error adding guest: ${error.message}`);
+                console.error('Failed to add guest:', error);
+                alert(`Connection error: ${error.message}\nCheck if the backend is running.`);
+            }
+        }
+
+        // Send invite to specific guest
+        async function sendInvite(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (!guest) return;
+            
+            logMessage(`📱 Sending invite to ${guest.name}...`);
+            
+            try {
+                const response = await fetch(`/api/send_invite/${guestId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    logMessage(`✅ ${result.message}`);
+                    await loadGuests();
+                    alert(`✅ Invite sent to ${guest.name}!`);
+                } else {
+                    logMessage(`❌ ${result.error}`);
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (error) {
+                logMessage(`❌ Failed to send invite: ${error.message}`);
+                console.error('Failed to send invite:', error);
+                alert(`Connection error: ${error.message}`);
+            }
+        }
+
+        // Send all pending invites
+        async function sendAllInvites() {
+            const pendingGuests = guests.filter(g => !g.invite_sent);
+            
+            if (pendingGuests.length === 0) {
+                alert('🎉 All invites have already been sent!');
+                return;
+            }
+            
+            if (!confirm(`Send invites to ${pendingGuests.length} guests?`)) {
+                return;
+            }
+            
+            logMessage(`🚀 Sending bulk invites to ${pendingGuests.length} guests...`);
+            
+            try {
+                const response = await fetch('/api/send_all_invites', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    logMessage(`✅ ${result.message}`);
+                    if (result.results) {
+                        result.results.sent.forEach(name => logMessage(`  ✅ Sent to ${name}`));
+                        result.results.failed.forEach(name => logMessage(`  ❌ Failed: ${name}`));
+                    }
+                    await loadGuests();
+                    alert(`Bulk send complete!\nSent: ${result.results?.sent?.length || 0}\nFailed: ${result.results?.failed?.length || 0}`);
+                } else {
+                    logMessage(`❌ Bulk send failed: ${result.error}`);
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (error) {
+                logMessage(`❌ Bulk send error: ${error.message}`);
+                console.error('Bulk send failed:', error);
+                alert(`Connection error: ${error.message}`);
+            }
+        }
+
+        // Test WhatsApp connection
+        async function testWhatsApp() {
+            logMessage('🧪 Testing WhatsApp configuration...');
+            await checkProviderStatus();
+        }
+
+        // Export guest list as CSV
+        function exportGuestList() {
+            if (guests.length === 0) {
+                alert('No guests to export!');
+                return;
+            }
+            
+            const headers = ['Name', 'Phone', 'Password', 'Invite Sent', 'RSVP Status'];
+            const csvData = guests.map(g => [
+                g.name,
+                g.phone,
+                g.password || '',
+                g.invite_sent ? 'Yes' : 'No',
+                g.rsvp_status || 'Pending'
+            ]);
+            
+            const csvContent = [headers, ...csvData]
+                .map(row => row.map(field => `"${field}"`).join(','))
+                .join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wedding_guests_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            logMessage(`📊 Exported ${guests.length} guests to CSV`);
+        }
+
+        // Log message to console
+        function logMessage(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('messageLog');
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[Admin] ${message}`);
+        }
+
+        // Initialize page
+        window.addEventListener('load', async () => {
+            logMessage('🚀 Wedding Admin Panel loaded');
+            await checkProviderStatus();
+            await loadGuests();
+        });
+
+        // Auto-refresh guests every 30 seconds
+        setInterval(async () => {
+            if (document.visibilityState === 'visible') {
+                await loadGuests();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
