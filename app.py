@@ -8,6 +8,7 @@ import os
 import logging
 import requests
 import json
+import time
 from datetime import datetime
 
 # Setup logging
@@ -68,15 +69,22 @@ PROVIDERS = {
 
 # ---------- Helpers ----------
 def normalize_phone(phone: str) -> str:
-    """Normalize phone numbers so login works with or without country code"""
+    """Normalize phone numbers - ensure proper format for WasenderAPI"""
     if not phone:
         return ""
+    
+    # Clean the phone number
     phone = phone.strip().replace(" ", "").replace("-", "")
-    if phone.startswith("+"):
-        return phone
-    if phone.startswith("0"):
-        return "+27" + phone[1:]  # default to South Africa country code
-    return "+27" + phone
+    
+    # Handle different input formats
+    if phone.startswith("+27"):
+        return phone  # Already correct: +27646191448
+    elif phone.startswith("27"):
+        return "+" + phone  # Add +: +27646191448
+    elif phone.startswith("0"):
+        return "+27" + phone[1:]  # Convert: +27646191448
+    else:
+        return "+27" + phone  # Assume SA number: +27646191448
 
 def generate_password(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -139,7 +147,7 @@ def send_authkey_message(phone, message):
         return False
 
 def send_wasender_message(phone, message):
-    """Enhanced WasenderAPI implementation with better error handling"""
+    """Fixed WasenderAPI implementation with proper phone formatting"""
     try:
         config = PROVIDERS['wasender']
         api_key = config['api_key']
@@ -148,115 +156,71 @@ def send_wasender_message(phone, message):
             logger.warning("⚠️ WasenderAPI API key not configured")
             return False
 
+        # Fix phone number format - WasenderAPI needs country code without +
         clean_phone = phone.replace('+', '').replace('-', '').replace(' ', '')
+        
+        # Ensure it starts with country code (27 for South Africa)
+        if clean_phone.startswith('0'):
+            clean_phone = '27' + clean_phone[1:]  # Convert 0646191448 to 27646191448
+        elif not clean_phone.startswith('27'):
+            clean_phone = '27' + clean_phone  # Add country code if missing
 
-        # Try multiple endpoint formats and payload structures
-        endpoints_to_try = [
-            {
-                'url': 'https://www.wasenderapi.com/api/send-message',
-                'payload': {"to": clean_phone, "text": message}
-            },
-            {
-                'url': 'https://api.wasenderapi.com/v1/send-message', 
-                'payload': {"to": clean_phone, "text": message}
-            },
-            {
-                'url': 'https://www.wasenderapi.com/api/send-message',
-                'payload': {"to": clean_phone, "message": message}
-            },
-            {
-                'url': 'https://wasenderapi.com/api/v1/messages/send',
-                'payload': {"phone": clean_phone, "text": message}
-            }
-        ]
-
+        # Use the correct endpoint and payload structure
+        api_url = 'https://www.wasenderapi.com/api/send-message'
+        payload = {"to": clean_phone, "text": message}
+        
         headers = {
             'Authorization': f'Bearer {api_key}', 
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
 
-        for i, endpoint in enumerate(endpoints_to_try):
-            try:
-                api_url = endpoint['url']
-                payload = endpoint['payload']
-                
-                logger.info(f"📱 Attempt {i+1}: Sending via WasenderAPI to {clean_phone}")
-                logger.info(f"🔧 Using URL: {api_url}")
-                logger.info(f"🔧 Payload: {payload}")
-                
-                response = requests.post(api_url, json=payload, headers=headers, timeout=30)
-                logger.info(f"📊 Response status: {response.status_code}")
-                logger.info(f"📊 Response headers: {dict(response.headers)}")
-                logger.info(f"📊 Response body: {response.text[:500]}...")
-
-                # Check if response is HTML (error page)
-                content_type = response.headers.get('content-type', '')
-                if content_type.startswith('text/html'):
-                    logger.warning(f"⚠️ Endpoint {i+1} returned HTML instead of JSON")
-                    logger.warning(f"⚠️ HTML content preview: {response.text[:200]}...")
-                    
-                    # Log specific HTML error types
-                    html_lower = response.text.lower()
-                    if "unauthorized" in html_lower or "login" in html_lower:
-                        logger.error("❌ Authentication issue detected in HTML response")
-                    elif "not found" in html_lower or "404" in html_lower:
-                        logger.error("❌ Endpoint not found (404) in HTML response")
-                    elif "rate limit" in html_lower or "too many" in html_lower:
-                        logger.error("❌ Rate limiting detected in HTML response")
-                    
-                    continue  # Try next endpoint
-
-                if response.status_code == 200:
-                    try:
-                        result = response.json()
-                        logger.info(f"✅ WasenderAPI message sent successfully: {result}")
-                        return True
-                    except json.JSONDecodeError as e:
-                        logger.warning(f"⚠️ Failed to parse JSON: {e}")
-                        logger.info(f"📄 Raw response: {response.text}")
-                        
-                        # Check for success indicators in plain text
-                        success_indicators = ['success', 'sent', 'delivered', 'queued', 'accepted']
-                        if any(indicator in response.text.lower() for indicator in success_indicators):
-                            logger.info("✅ WasenderAPI message sent (detected success in plain text)")
-                            return True
-                        else:
-                            logger.warning("⚠️ No success indicators found in response")
-                            continue
-                            
-                elif response.status_code == 401:
-                    logger.error("❌ WasenderAPI: Unauthorized (401) - Check API key")
-                    continue
-                elif response.status_code == 403:
-                    logger.error("❌ WasenderAPI: Forbidden (403) - Check permissions or WhatsApp session")
-                    continue
-                elif response.status_code == 404:
-                    logger.error(f"❌ WasenderAPI: Not Found (404) - Endpoint {api_url} doesn't exist")
-                    continue
-                elif response.status_code == 429:
-                    logger.error("❌ WasenderAPI: Rate limited (429)")
-                    continue
-                else:
-                    logger.error(f"❌ WasenderAPI HTTP error {response.status_code}: {response.text}")
-                    continue
-                    
-            except requests.exceptions.Timeout:
-                logger.error(f"❌ Endpoint {i+1} timed out")
-                continue
-            except requests.exceptions.ConnectionError as e:
-                logger.error(f"❌ Endpoint {i+1} connection error: {e}")
-                continue
-            except Exception as e:
-                logger.error(f"❌ Endpoint {i+1} exception: {e}")
-                continue
-
-        # If we get here, all endpoints failed
-        logger.error("❌ All WasenderAPI endpoints failed")
-        return False
+        logger.info(f"📱 Sending via WasenderAPI to {clean_phone}")
+        logger.info(f"🔧 Using URL: {api_url}")
+        logger.info(f"🔧 Payload: {payload}")
         
+        response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+        logger.info(f"📊 Response status: {response.status_code}")
+        logger.info(f"📊 Response body: {response.text}")
+
+        if response.status_code == 200:
+            try:
+                result = response.json()
+                logger.info(f"✅ WasenderAPI message sent: {result}")
+                return True
+            except json.JSONDecodeError:
+                # Check for success in plain text
+                if any(keyword in response.text.lower() for keyword in ['success', 'sent', 'delivered', 'queued']):
+                    logger.info("✅ WasenderAPI message sent (plain text response)")
+                    return True
+                else:
+                    logger.error(f"❌ Unexpected response format: {response.text}")
+                    return False
+                    
+        elif response.status_code == 422:
+            logger.error(f"❌ WasenderAPI validation error (422): {response.text}")
+            logger.error(f"❌ Phone format issue - tried: {clean_phone}")
+            return False
+            
+        elif response.status_code == 429:
+            try:
+                error_data = response.json()
+                retry_after = error_data.get('retry_after', 60)
+                logger.error(f"❌ WasenderAPI rate limited - retry after {retry_after} seconds")
+            except:
+                logger.error("❌ WasenderAPI rate limited - free trial: 1 message per minute")
+            return False
+            
+        elif response.status_code == 401:
+            logger.error("❌ WasenderAPI unauthorized - check API key")
+            return False
+            
+        else:
+            logger.error(f"❌ WasenderAPI HTTP error {response.status_code}: {response.text}")
+            return False
+            
     except Exception as e:
-        logger.error(f"❌ WasenderAPI general exception: {e}", exc_info=True)
+        logger.error(f"❌ WasenderAPI exception: {e}", exc_info=True)
         return False
 
 def send_twilio_message(phone, message):
@@ -369,6 +333,63 @@ The Happy Couple 💕"""
         session.close()
         logger.error(f"❌ Failed to send invitation to {guest.name}")
         return jsonify({"error": f"Failed to send WhatsApp message via {WHATSAPP_PROVIDER}"}), 500
+
+@app.route("/api/send_invite_with_delay/<int:guest_id>", methods=["POST"])
+def send_invite_with_delay(guest_id):
+    """Send invite with automatic delay handling for free trial rate limits"""
+    session = Session()
+    guest = session.get(Guest, guest_id)
+
+    if not guest:
+        session.close()
+        return jsonify({"error": "Guest not found"}), 404
+
+    logger.info(f"📧 Sending invite to {guest.name} ({guest.phone}) via {WHATSAPP_PROVIDER}")
+
+    message = f"""🌟 You're invited to the best wedding this galaxy has ever experienced! 🚀
+
+Hi {guest.name}! 💍
+
+You're cordially invited to join us for our special day.
+
+📱 RSVP here: {LOGIN_LINK}
+🔐 Your password: {guest.password}
+
+📅 Date: Saturday, August 12th, 2025
+📍 Venue: The Spectacular Galaxy Gardens
+🕐 Time: 4:00 PM - Late Night
+
+Can't wait to celebrate with you! ✨
+
+Love,
+The Happy Couple 💕"""
+
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            success = send_whatsapp_message(guest.phone, message)
+            
+            if success:
+                guest.invite_sent = True
+                session.commit()
+                session.close()
+                logger.info(f"✅ Invitation sent to {guest.name}")
+                return jsonify({"message": f"Invitation sent to {guest.name} via {WHATSAPP_PROVIDER}"})
+            else:
+                retry_count += 1
+                if retry_count < max_retries:
+                    logger.info(f"⏳ Retrying in 65 seconds (attempt {retry_count + 1}/{max_retries})...")
+                    time.sleep(65)  # Wait just over 1 minute for rate limit reset
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"❌ Exception while sending invite: {e}", exc_info=True)
+            break
+    
+    session.close()
+    return jsonify({"error": f"Failed to send invitation after {max_retries} attempts"}), 500
 
 @app.route("/api/guests", methods=["GET"])
 def get_guests():
