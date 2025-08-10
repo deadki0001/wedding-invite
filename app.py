@@ -39,7 +39,7 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
 # Multi-provider WhatsApp configuration
-WHATSAPP_PROVIDER = os.getenv('WHATSAPP_PROVIDER', 'wasender').lower()  # Default to wasender
+WHATSAPP_PROVIDER = os.getenv('WHATSAPP_PROVIDER', 'wasender').lower()
 LOGIN_LINK = os.getenv('WEDDING_LOGIN_URL', "https://wedding-invitation.adkinsfamily.co.za/")
 
 logger.info(f"🔧 Environment check:")
@@ -66,57 +66,63 @@ PROVIDERS = {
     }
 }
 
-# Phone normalization helper
+# ---------- Helpers ----------
 def normalize_phone(phone: str) -> str:
-    """Ensure phone number includes country code (+27 for SA if missing)."""
+    """Normalize phone numbers so login works with or without country code"""
     if not phone:
-        return phone
+        return ""
     phone = phone.strip().replace(" ", "").replace("-", "")
+    if phone.startswith("+"):
+        return phone
     if phone.startswith("0"):
-        return "+27" + phone[1:]
-    elif not phone.startswith("+"):
-        return "+27" + phone
-    return phone
+        return "+27" + phone[1:]  # default to South Africa country code
+    return "+27" + phone
 
 def generate_password(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
+# ---------- WhatsApp Senders ----------
 def send_whatsapp_message(phone, message):
-    """Multi-provider WhatsApp message sender"""
-    provider = WHATSAPP_PROVIDER.lower()
-    logger.info(f"🔧 Using provider: {provider}")
-    
-    if provider == 'authkey':
-        return send_authkey_message(phone, message)
-    elif provider == 'wasender':
-        return send_wasender_message(phone, message)
-    elif provider == 'twilio':
-        return send_twilio_message(phone, message)
-    else:
-        logger.error(f"❌ Unknown provider: {provider}")
+    try:
+        provider = WHATSAPP_PROVIDER.lower()
+        logger.info(f"🔧 Using provider: {provider}")
+
+        if provider == 'authkey':
+            return send_authkey_message(phone, message)
+        elif provider == 'wasender':
+            return send_wasender_message(phone, message)
+        elif provider == 'twilio':
+            return send_twilio_message(phone, message)
+        else:
+            logger.error(f"❌ Unknown provider: {provider}")
+            return False
+    except Exception as e:
+        logger.error(f"❌ send_whatsapp_message exception: {e}", exc_info=True)
         return False
 
 def send_authkey_message(phone, message):
-    """Send via Authkey API (1000 free messages/month)"""
     try:
         config = PROVIDERS['authkey']
         if not config['api_key']:
             logger.warning("⚠️ Authkey API key not configured")
             return False
 
-        phone = normalize_phone(phone)
+        if not phone.startswith('+'):
+            phone = '+' + phone
+
         payload = {
             "authkey": config['api_key'],
             "mobiles": phone,
             "message": message,
             "sender": config['sender_id'],
-            "route": "4",  # WhatsApp route
+            "route": "4",
             "country": "0"
         }
+
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         logger.info(f"📱 Sending via Authkey to {phone}")
         response = requests.post(config['api_url'], data=payload, headers=headers)
-        
+
         if response.status_code == 200:
             result = response.json()
             if result.get('Status') == 'success':
@@ -133,24 +139,25 @@ def send_authkey_message(phone, message):
         return False
 
 def send_wasender_message(phone, message):
-    """Send via WasenderAPI"""
     try:
         config = PROVIDERS['wasender']
         api_key = config['api_key']
+
         if not api_key:
             logger.warning("⚠️ WasenderAPI API key not configured")
             return False
 
-        clean_phone = normalize_phone(phone).replace('+', '')
+        clean_phone = phone.replace('+', '').replace('-', '').replace(' ', '')
+
         payload = {"to": clean_phone, "text": message}
         headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
         api_url = config['api_url']
-        
+
         logger.info(f"📱 Sending via WasenderAPI to {clean_phone}")
         response = requests.post(api_url, json=payload, headers=headers)
         logger.info(f"📊 Response status: {response.status_code}")
         logger.info(f"📊 Response body: {response.text}")
-        
+
         if response.status_code == 200:
             try:
                 result = response.json()
@@ -158,7 +165,7 @@ def send_wasender_message(phone, message):
                 return True
             except json.JSONDecodeError:
                 if 'success' in response.text.lower():
-                    logger.info(f"✅ WasenderAPI message sent (plain text)")
+                    logger.info("✅ WasenderAPI message sent (plain text)")
                     return True
                 else:
                     logger.error(f"❌ WasenderAPI unexpected response: {response.text}")
@@ -171,16 +178,18 @@ def send_wasender_message(phone, message):
         return False
 
 def send_twilio_message(phone, message):
-    """Send via Twilio (fallback)"""
     try:
         from twilio.rest import Client
         config = PROVIDERS['twilio']
         if not all([config['account_sid'], config['api_key'], config['api_secret']]):
             logger.warning("⚠️ Twilio not configured")
             return False
+
         client = Client(config['api_key'], config['api_secret'], config['account_sid'])
-        phone = normalize_phone(phone)
+        if not phone.startswith('+'):
+            phone = '+' + phone
         to_whatsapp = f'whatsapp:{phone}'
+
         message_obj = client.messages.create(
             body=message,
             from_=config['whatsapp_number'],
@@ -192,15 +201,12 @@ def send_twilio_message(phone, message):
         logger.error(f"❌ Twilio exception: {e}", exc_info=True)
         return False
 
-# Routes
+# ---------- Routes ----------
 @app.route("/")
 def index():
     return send_from_directory('.', 'index.html')
 
 @app.route("/admin")
-def admin():
-    return send_from_directory('.', 'admin.html')
-
 @app.route("/admin.html")
 def admin_html():
     return send_from_directory('.', 'admin.html')
@@ -213,6 +219,7 @@ def main():
 def add_guest():
     data = request.get_json()
     session = Session()
+
     name = data.get("name")
     phone = normalize_phone(data.get("phone"))
     logger.info(f"🆕 Adding guest: {name} - {phone}")
@@ -220,6 +227,7 @@ def add_guest():
     if not name or not phone:
         session.close()
         return jsonify({"error": "Name and phone are required"}), 400
+
     if session.query(Guest).filter_by(phone=phone).first():
         session.close()
         return jsonify({"error": "Guest already exists"}), 409
@@ -229,8 +237,56 @@ def add_guest():
     session.add(guest)
     session.commit()
     session.close()
+
     logger.info(f"✅ Guest added: {name} - Password: {password}")
     return jsonify({"message": f"Guest {name} added successfully", "password": password, "phone": phone})
+
+@app.route("/api/send_invite/<int:guest_id>", methods=["POST"])
+def send_invite(guest_id):
+    session = Session()
+    guest = session.get(Guest, guest_id)
+
+    if not guest:
+        session.close()
+        return jsonify({"error": "Guest not found"}), 404
+
+    logger.info(f"📧 Sending invite to {guest.name} ({guest.phone}) via {WHATSAPP_PROVIDER}")
+
+    message = f"""🌟 You're invited to the best wedding this galaxy has ever experienced! 🚀
+
+Hi {guest.name}! 💍
+
+You're cordially invited to join us for our special day.
+
+📱 RSVP here: {LOGIN_LINK}
+🔐 Your password: {guest.password}
+
+📅 Date: Saturday, August 12th, 2025
+📍 Venue: The Spectacular Galaxy Gardens
+🕐 Time: 4:00 PM - Late Night
+
+Can't wait to celebrate with you! ✨
+
+Love,
+The Happy Couple 💕"""
+
+    try:
+        success = send_whatsapp_message(guest.phone, message)
+    except Exception as e:
+        logger.error(f"❌ Exception while sending invite: {e}", exc_info=True)
+        session.close()
+        return jsonify({"error": "Internal server error while sending invite"}), 500
+
+    if success:
+        guest.invite_sent = True
+        session.commit()
+        session.close()
+        logger.info(f"✅ Invitation sent to {guest.name}")
+        return jsonify({"message": f"Invitation sent to {guest.name} via {WHATSAPP_PROVIDER}"})
+    else:
+        session.close()
+        logger.error(f"❌ Failed to send invitation to {guest.name}")
+        return jsonify({"error": f"Failed to send WhatsApp message via {WHATSAPP_PROVIDER}"}), 500
 
 @app.route("/api/guests", methods=["GET"])
 def get_guests():
@@ -261,9 +317,14 @@ def login():
     session = Session()
     guest = session.query(Guest).filter_by(phone=phone, password=password).first()
     session.close()
+
     if guest:
         logger.info(f"✅ Login successful: {guest.name}")
-        return jsonify({"success": True, "guest": {"name": guest.name, "phone": guest.phone, "rsvp_status": guest.rsvp_status}})
+        return jsonify({"success": True, "guest": {
+            "name": guest.name,
+            "phone": guest.phone,
+            "rsvp_status": guest.rsvp_status
+        }})
     logger.warning(f"❌ Login failed: {phone}")
     return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
@@ -272,16 +333,21 @@ def rsvp():
     data = request.get_json()
     phone = normalize_phone(data.get("phone"))
     status = data.get("status")
+
     if not phone or status not in ['accepted', 'declined']:
         return jsonify({"success": False, "error": "Invalid data"}), 400
+
     session = Session()
     guest = session.query(Guest).filter_by(phone=phone).first()
+
     if not guest:
         session.close()
         return jsonify({"success": False, "error": "Guest not found"}), 404
+
     guest.rsvp_status = status
     session.commit()
     session.close()
+
     logger.info(f"✅ RSVP updated: {guest.name} - {status}")
     return jsonify({"success": True, "message": f"RSVP updated to {status}"})
 
@@ -289,29 +355,36 @@ def rsvp():
 def test_whatsapp():
     logger.info(f"🧪 Testing {WHATSAPP_PROVIDER} configuration...")
     config = PROVIDERS.get(WHATSAPP_PROVIDER, {})
+
     if WHATSAPP_PROVIDER == 'authkey':
         if config.get('api_key'):
-            return jsonify({"status": f"Authkey configured ✅", "provider": "Authkey", "free_messages": "1000/month", "api_key": "✅ Set"})
+            return jsonify({"status": "Authkey configured ✅", "provider": "Authkey", "free_messages": "1000/month", "api_key": "✅ Set"})
         else:
             return jsonify({"error": "Authkey API key not configured"})
+
     elif WHATSAPP_PROVIDER == 'wasender':
         if config.get('api_key'):
-            return jsonify({"status": f"WasenderAPI configured ✅", "provider": "WasenderAPI", "pricing": "$6/month after free trial", "api_key": "✅ Set", "endpoint": "https://www.wasenderapi.com/api/send-message"})
+            return jsonify({"status": "WasenderAPI configured ✅", "provider": "WasenderAPI", "pricing": "$6/month after free trial", "api_key": "✅ Set"})
         else:
             return jsonify({"error": "WasenderAPI API key not configured"})
+
     elif WHATSAPP_PROVIDER == 'twilio':
         if all([config.get('account_sid'), config.get('api_key'), config.get('api_secret')]):
-            return jsonify({"status": f"Twilio configured ✅", "provider": "Twilio", "limitation": "Sandbox mode - single verified number", "account_sid": "✅ Set"})
+            return jsonify({"status": "Twilio configured ✅", "provider": "Twilio", "limitation": "Sandbox mode - single verified number", "account_sid": "✅ Set"})
         else:
             return jsonify({"error": "Twilio not fully configured"})
+
     return jsonify({"error": f"Unknown provider: {WHATSAPP_PROVIDER}"})
 
 if __name__ == "__main__":
     logger.info("🚀 Starting Multi-Provider Wedding Invitation Backend...")
     logger.info(f"📱 WhatsApp Provider: {WHATSAPP_PROVIDER.upper()}")
     logger.info(f"🔗 Login link: {LOGIN_LINK}")
+
+    config = PROVIDERS.get(WHATSAPP_PROVIDER, {})
     port = int(os.getenv('PORT', 5000))
     host = os.getenv('HOST', '0.0.0.0')
     debug = os.getenv('FLASK_ENV') != 'production'
+
     logger.info(f"🌐 Starting server on {host}:{port} (debug={debug})")
     app.run(debug=debug, host=host, port=port)
