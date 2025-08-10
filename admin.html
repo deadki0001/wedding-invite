@@ -110,7 +110,7 @@
         <h1>🚀 Wedding Invitation Admin Panel</h1>
         
         <div class="redirect-notice">
-            <h3>🔄 Redirecting to Admin Panel...</h3>
+            <h3>🔄 Redirecting to Admin Panel in 3 seconds...</h3>
             <p>If you're not automatically redirected, click the button below:</p>
             <a href="/admin" class="button">🔗 Go to Admin Panel</a>
         </div>
@@ -173,20 +173,15 @@ WEDDING_LOGIN_URL=https://wedding-invitation.adkinsfamily.co.za/
     </div>
 
     <script>
-        // Auto-redirect to the correct admin panel after 3 seconds
-        setTimeout(() => {
-            window.location.href = '/admin';
-        }, 3000);
-        
-        // Show countdown
+        // Countdown & redirect logic
         let countdown = 3;
         const countdownElement = document.querySelector('.redirect-notice h3');
         const interval = setInterval(() => {
-            countdown--;
             countdownElement.textContent = `🔄 Redirecting to Admin Panel in ${countdown} seconds...`;
-            if (countdown <= 0) {
+            countdown--;
+            if (countdown < 0) {
                 clearInterval(interval);
-                countdownElement.textContent = '🔄 Redirecting now...';
+                window.location.href = '/admin';
             }
         }, 1000);
     </script>
