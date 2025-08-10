@@ -14,11 +14,20 @@ from datetime import datetime
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
+# Load environment variables - try multiple files
+env_files = ['production.env', 'development.env', '.env']
+env_loaded = False
+
 try:
     from dotenv import load_dotenv
-    load_dotenv('development.env')
-    logger.info("✅ Loaded environment variables from development.env")
+    for env_file in env_files:
+        if os.path.exists(env_file):
+            load_dotenv(env_file)
+            logger.info(f"✅ Loaded environment variables from {env_file}")
+            env_loaded = True
+            break
+    if not env_loaded:
+        logger.warning(f"⚠️ No environment file found. Checked: {env_files}")
 except ImportError:
     logger.warning("⚠️ python-dotenv not installed. Using system environment variables.")
 
@@ -30,8 +39,13 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
 # Multi-provider WhatsApp configuration
-WHATSAPP_PROVIDER = os.getenv('WHATSAPP_PROVIDER', 'authkey')  # authkey, wasender, twilio
-LOGIN_LINK = "https://wedding-invitation.adkinsfamily.co.za/"
+WHATSAPP_PROVIDER = os.getenv('WHATSAPP_PROVIDER', 'wasender').lower()  # Default to wasender
+LOGIN_LINK = os.getenv('WEDDING_LOGIN_URL', "https://wedding-invitation.adkinsfamily.co.za/")
+
+logger.info(f"🔧 Environment check:")
+logger.info(f"   WHATSAPP_PROVIDER = {WHATSAPP_PROVIDER}")
+logger.info(f"   WASENDER_API_KEY = {'SET' if os.getenv('WASENDER_API_KEY') else 'NOT SET'}")
+logger.info(f"   AUTHKEY_API_KEY = {'SET' if os.getenv('AUTHKEY_API_KEY') else 'NOT SET'}")
 
 # Provider configurations
 PROVIDERS = {
@@ -58,6 +72,7 @@ def generate_password(length=8):
 def send_whatsapp_message(phone, message):
     """Multi-provider WhatsApp message sender"""
     provider = WHATSAPP_PROVIDER.lower()
+    logger.info(f"🔧 Using provider: {provider}")
     
     if provider == 'authkey':
         return send_authkey_message(phone, message)
@@ -115,8 +130,11 @@ def send_wasender_message(phone, message):
     """Send via WasenderAPI"""
     try:
         config = PROVIDERS['wasender']
-        if not config['api_key']:
+        api_key = config['api_key']
+        
+        if not api_key:
             logger.warning("⚠️ WasenderAPI API key not configured")
+            logger.warning(f"   Expected WASENDER_API_KEY, got: {api_key}")
             return False
 
         # Format phone number (remove + and spaces, keep country code)
@@ -128,31 +146,34 @@ def send_wasender_message(phone, message):
         }
         
         headers = {
-            'Authorization': f'Bearer {config["api_key"]}',
+            'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
         
-        # Correct WasenderAPI endpoint
-        api_url = 'https://www.wasenderapi.com/api/send-message'
+        api_url = config['api_url']
         
         logger.info(f"📱 Sending via WasenderAPI to {clean_phone}")
         logger.info(f"🔗 Using endpoint: {api_url}")
+        logger.info(f"🔑 API key (first 10 chars): {api_key[:10]}...")
         
-        response = requests.post(api_url, 
-                               json=payload,  # Use json parameter instead of data
-                               headers=headers)
+        response = requests.post(api_url, json=payload, headers=headers)
         
         logger.info(f"📊 Response status: {response.status_code}")
         logger.info(f"📊 Response body: {response.text}")
         
         if response.status_code == 200:
-            result = response.json()
-            if result.get('success') is not False:  # WasenderAPI might not have 'success' field
+            try:
+                result = response.json()
                 logger.info(f"✅ WasenderAPI message sent: {result}")
                 return True
-            else:
-                logger.error(f"❌ WasenderAPI error: {result}")
-                return False
+            except json.JSONDecodeError:
+                # Some APIs return plain text success
+                if 'success' in response.text.lower() or response.status_code == 200:
+                    logger.info(f"✅ WasenderAPI message sent (plain text response)")
+                    return True
+                else:
+                    logger.error(f"❌ WasenderAPI unexpected response: {response.text}")
+                    return False
         else:
             logger.error(f"❌ WasenderAPI HTTP error: {response.status_code} - {response.text}")
             return False
@@ -243,7 +264,8 @@ def add_guest():
 @app.route("/api/send_invite/<int:guest_id>", methods=["POST"])
 def send_invite(guest_id):
     session = Session()
-    guest = session.query(Guest).get(guest_id)
+    # Use Session.get() instead of Query.get() to fix the deprecation warning
+    guest = session.get(Guest, guest_id)
 
     if not guest:
         session.close()
