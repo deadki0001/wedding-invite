@@ -25,7 +25,7 @@
             -moz-osx-font-smoothing:grayscale;
         }
 
-        /* Enhanced Carousel - Shows 3 photos at a time */
+        /* Carousel Container */
         .carousel-container {
             position: relative;
             width: 100%;
@@ -67,29 +67,31 @@
             overflow: hidden;
         }
 
+        /* Loading state - simple background */
         .carousel-item.loading {
-            opacity: 0.85;
             background: linear-gradient(135deg, var(--blush), var(--rose));
-            animation: shimmer 1.8s infinite linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         }
 
         .carousel-item.loading::before {
-            content: '📸';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-            font-size: 1.8rem;
-            z-index: 2;
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+            content: '💕';
+            font-size: 2rem;
+            animation: pulse 1.5s infinite;
         }
 
-        @keyframes shimmer {
-            0% { background-position: -200px 0; }
-            100% { background-position: 200px 0; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
         }
 
-        .carousel-item.loaded { opacity: 1; }
+        .carousel-item.loaded { 
+            opacity: 1; 
+        }
 
         .carousel-item.error {
             background: linear-gradient(135deg, var(--rose), var(--burgundy));
@@ -153,32 +155,6 @@
 
         .dot.active { background: var(--gold); transform: scale(1.2); }
 
-        /* Loading progress bar */
-        .loading-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--gold), var(--rose));
-            z-index: 9999;
-            transition: width 0.25s linear;
-        }
-
-        /* Performance stats (debug) */
-        .perf-stats {
-            position: fixed;
-            bottom: 18px;
-            left: 18px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 0.6rem;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            z-index: 1000;
-            display: none;
-        }
-
         /* Main Content */
         .main-content {
             padding: 2rem;
@@ -236,9 +212,6 @@
         .logout-btn { position: fixed; top: 20px; right: 20px; background: var(--burgundy); color: white; border: none; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; font-size: 0.9rem; z-index: 1000; }
         .logout-btn:hover { background: var(--rose); transform: scale(1.05); }
 
-        /* Image fallback styles */
-        .carousel-item.fallback { display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,var(--blush),var(--rose)); color:white; font-size:1.1rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.25); }
-
         /* Responsive */
         @media (max-width: 768px) {
             .carousel-container { height: 300px; }
@@ -249,25 +222,60 @@
             .carousel-nav { width: 40px; height: 40px; font-size: 20px; }
         }
 
-        /* small loading placeholder text */
-        .carousel-loading { display:flex; justify-content:center; align-items:center; height:100%; color:var(--burgundy); font-size:1.1rem;}
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
-        .carousel-loading::after { content: '...'; animation: pulse 1.5s infinite; }
+        /* Preloader for entire page */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--soft-pink), var(--blush));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-content {
+            text-align: center;
+            color: var(--burgundy);
+        }
+
+        .loader-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .loader-spinner {
+            font-size: 3rem;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <div class="loading-progress" id="loadingProgress"></div>
-    <div class="perf-stats" id="perfStats" aria-hidden="true"></div>
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-spinner">💍</div>
+            <h2>Preparing your beautiful memories...</h2>
+        </div>
+    </div>
 
     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
 
-    <!-- Enhanced Photo Carousel -->
+    <!-- Photo Carousel -->
     <div class="carousel-container" aria-roledescription="carousel">
         <button class="carousel-nav prev" aria-label="Previous" onclick="previousSlide()">‹</button>
         <button class="carousel-nav next" aria-label="Next" onclick="nextSlide()">›</button>
 
         <div class="carousel" id="photoCarousel" aria-live="polite" role="region">
-            <div class="carousel-loading">🎨 Preparing your beautiful memories</div>
+            <!-- Slides will be dynamically created -->
         </div>
 
         <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Slide indicators"></div>
@@ -320,593 +328,366 @@
     </audio>
 
     <script>
-    /*****************************************************************
-     * Optimized carousel with:
-     *  - IntersectionObserver lazy loading
-     *  - In-memory cache with limited size
-     *  - Priority load for first slide
-     *  - Background batch prefetch of upcoming slides
-     *  - Service worker registration (via Blob)
-     *****************************************************************/
+        let currentGuest = null;
+        let currentSlide = 0;
+        let totalSlides = 0;
+        let autoSlideInterval = null;
+        let allPhotos = [];
+        let photoSlides = [];
+        const assetsBase = 'assets/';
 
-    let currentGuest = null;
-    let currentSlide = 0;
-    let totalSlides = 0;
-    let autoSlideInterval = null;
-    let allPhotos = [];
-    const assetsBase = 'assets/'; // where images live
+        // Curated list of key photos that exist and load quickly
+        const availablePhotos = [
+            'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
+            'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
+            'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
+            'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
+            'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg'
+        ]; // Reduced to first 20 photos for faster loading
 
-    // Performance tracking
-    const perfStats = {
-        imagesLoaded: 0,
-        imagesFailed: 0,
-        cacheHits: 0,
-        loadStartTime: Date.now(),
-        averageLoadTime: 0
-    };
-
-    // Your available photos (unchanged)
-    const availablePhotos = [
-        'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
-        'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
-        'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
-        'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
-        'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg',
-        'IMG_0362.jpg', 'IMG_0382.jpg', 'IMG_0385.jpg', 'IMG_0386.jpg',
-        'IMG_0393.jpg', 'IMG_0394.jpg', 'IMG_0397.jpg', 'IMG_0400.jpg',
-        'IMG_0405.jpg', 'IMG_0407.jpg', 'IMG_0409.jpg', 'IMG_0416.jpg',
-        'IMG_0417.jpg', 'IMG_0418.jpg', 'IMG_0423.jpg', 'IMG_0424.jpg',
-        'IMG_0431.jpg', 'IMG_0436.jpg', 'IMG_0439.jpg', 'IMG_0440.jpg',
-        'IMG_0442.jpg', 'IMG_0446.jpg', 'IMG_0448.jpg', 'IMG_0451.jpg',
-        'IMG_0458.jpg', 'IMG_0467.jpg', 'IMG_0470.jpg', 'IMG_0471.jpg',
-        'IMG_0472.jpg', 'IMG_0473.jpg', 'IMG_0475.jpg', 'IMG_0478.jpg',
-        'IMG_0481.jpg', 'IMG_0483.jpg', 'IMG_0487.jpg', 'IMG_0489.jpg',
-        'IMG_0493.jpg', 'IMG_0502.jpg', 'IMG_0504.jpg', 'IMG_0505.jpg',
-        'IMG_0507.jpg', 'IMG_0508.jpg', 'IMG_0511.jpg', 'IMG_0515.jpg',
-        'IMG_0522.jpg', 'IMG_0548.jpg', 'IMG_0551.jpg', 'IMG_0552.jpg',
-        'IMG_0559.jpg', 'IMG_0560.jpg', 'IMG_0565.jpg', 'IMG_0566.jpg',
-        'IMG_0570.jpg', 'IMG_0572.jpg', 'IMG_0576.jpg', 'IMG_0579.jpg',
-        'IMG_0580.jpg', 'IMG_0583.jpg', 'IMG_0588.jpg', 'IMG_0589.jpg',
-        'IMG_0596.jpg', 'IMG_0606.jpg', 'IMG_0614.jpg', 'IMG_0616.jpg'
-    ];
-
-    /* ---------- Image Cache Manager (simple LRU-like) ---------- */
-    class ImageCacheManager {
-        constructor(maxSize = 80) {
-            this.cache = new Map();
-            this.maxSize = maxSize;
-            this.loading = new Map(); // promises for in-flight loads
-        }
-
-        async load(src, priority = 'normal') {
-            // If cached => return immediately
-            if (this.cache.has(src)) {
-                perfStats.cacheHits++;
-                return this.cache.get(src);
+        /* Simplified and faster photo loading */
+        function initializeCarousel() {
+            // Filter and prioritize photos
+            const priority = ['ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg'];
+            const priorityPhotos = priority.filter(p => availablePhotos.includes(p));
+            const otherPhotos = availablePhotos.filter(p => !priority.includes(p));
+            
+            // Shuffle other photos for variety
+            for (let i = otherPhotos.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [otherPhotos[i], otherPhotos[j]] = [otherPhotos[j], otherPhotos[i]];
             }
+            
+            allPhotos = [...priorityPhotos, ...otherPhotos];
 
-            if (this.loading.has(src)) {
-                return this.loading.get(src);
+            // Group into slides of 3
+            photoSlides = [];
+            for (let i = 0; i < allPhotos.length; i += 3) {
+                photoSlides.push(allPhotos.slice(i, i + 3));
             }
+            totalSlides = photoSlides.length;
 
-            const p = this._loadImg(src, priority).then(url => {
-                // Put into cache (LRU: delete oldest if needed)
-                if (this.cache.size >= this.maxSize) {
-                    const firstKey = this.cache.keys().next().value;
-                    this.cache.delete(firstKey);
-                }
-                this.cache.set(src, url);
-                this.loading.delete(src);
-                return url;
-            }).catch(err => {
-                this.loading.delete(src);
-                throw err;
-            });
+            // Create carousel HTML
+            const carousel = document.getElementById('photoCarousel');
+            carousel.innerHTML = '';
 
-            this.loading.set(src, p);
-            return p;
-        }
+            photoSlides.forEach((slidePhotos, slideIndex) => {
+                const slide = document.createElement('div');
+                slide.className = 'carousel-slide';
+                slide.setAttribute('data-slide', slideIndex);
 
-        _loadImg(src, priority) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const start = performance.now();
-
-                img.onload = () => {
-                    const loadTime = Math.max(1, Math.round(performance.now() - start));
-                    perfStats.averageLoadTime = perfStats.averageLoadTime ? Math.round((perfStats.averageLoadTime + loadTime) / 2) : loadTime;
-                    perfStats.imagesLoaded++;
-                    this._updatePerfElement();
-                    resolve(src);
-                };
-
-                img.onerror = (e) => {
-                    perfStats.imagesFailed++;
-                    this._updatePerfElement();
-                    reject(new Error('Failed to load ' + src));
-                };
-
-                // Browser hints
-                if ('loading' in img) {
-                    img.loading = (priority === 'high') ? 'eager' : 'lazy';
-                }
-
-                // assign src
-                img.src = src;
-            });
-        }
-
-        _updatePerfElement() {
-            const el = document.getElementById('perfStats');
-            if (!el) return;
-            if (!window.location.search.includes('debug=true')) { el.style.display = 'none'; return; }
-            el.style.display = 'block';
-            el.innerHTML = `
-                📊 Loaded: ${perfStats.imagesLoaded}/${allPhotos.length}<br>
-                ❌ Failed: ${perfStats.imagesFailed}<br>
-                ♻️ Cache hits: ${perfStats.cacheHits}<br>
-                ⏱ Avg load: ${perfStats.averageLoadTime}ms
-            `;
-        }
-    }
-
-    const cacheManager = new ImageCacheManager(60);
-
-    /* ---------- IntersectionObserver for lazy loading slides ---------- */
-    let slideObserver;
-    function makeSlideObserver() {
-        if ('IntersectionObserver' in window) {
-            slideObserver = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const slide = entry.target;
-                        // load images for that slide
-                        loadSlideElements(slide, 'normal');
-                        slideObserver.unobserve(slide);
-                    }
-                });
-            }, { root: null, rootMargin: '400px', threshold: 0.01 });
-        } else {
-            slideObserver = null;
-        }
-    }
-
-    /* ---------- Service Worker: register from a Blob (no separate file required) ---------- */
-    async function registerServiceWorker() {
-        if (!('serviceWorker' in navigator)) return;
-        try {
-            const swCode = `
-                const CACHE_NAME = 'wedding-cache-v1';
-                const RUNTIME = 'runtime-cache';
-                const PRECACHE_URLS = [
-                    './',
-                    'index.html',
-                    'assets/wedding-song.mp3'
-                ];
-                self.addEventListener('install', event => {
-                    self.skipWaiting();
-                    event.waitUntil(
-                        caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS).catch(()=>{}))
-                    );
-                });
-                self.addEventListener('activate', event => {
-                    event.waitUntil(self.clients.claim());
-                });
-                self.addEventListener('fetch', event => {
-                    const request = event.request;
-                    const url = new URL(request.url);
-
-                    // Only handle GET
-                    if (request.method !== 'GET') return;
-
-                    // Image & asset caching: Cache-first, fall back to network, then fallback image
-                    if (request.destination === 'image' || url.pathname.startsWith('/assets/')) {
-                        event.respondWith(
-                            caches.open(RUNTIME).then(async cache => {
-                                const cached = await cache.match(request);
-                                if (cached) return cached;
-                                try {
-                                    const response = await fetch(request);
-                                    cache.put(request, response.clone());
-                                    // Limit cache size (simple approach)
-                                    trimCache(RUNTIME, 200);
-                                    return response;
-                                } catch (err) {
-                                    // fallback to an empty Response or a tiny inline SVG
-                                    return new Response('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%"height="100%"fill="#f8cfd5"/></svg>', { headers: { 'Content-Type': 'image/svg+xml' }});
-                                }
-                            })
-                        );
-                        return;
-                    }
-
-                    // For other requests, network-first then cache
-                    event.respondWith(
-                        fetch(request).then(resp => {
-                            return resp;
-                        }).catch(() => caches.match(request))
-                    );
+                slidePhotos.forEach((photo, photoIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item loading';
+                    item.setAttribute('data-photo', photo);
+                    item.setAttribute('role', 'img');
+                    item.setAttribute('aria-label', `Photo ${slideIndex * 3 + photoIndex + 1}`);
+                    slide.appendChild(item);
                 });
 
-                async function trimCache(name, maxItems) {
-                    const cache = await caches.open(name);
-                    const keys = await cache.keys();
-                    if (keys.length > maxItems) {
-                        await cache.delete(keys[0]);
-                        trimCache(name, maxItems);
-                    }
-                }
-            `;
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            await navigator.serviceWorker.register(swUrl);
-            console.info('Service worker registered from blob ✅');
-        } catch (err) {
-            console.warn('Service worker registration failed', err);
-        }
-    }
-
-    /* ---------- Build carousel HTML, but lazy-load backgrounds ---------- */
-    function initializeCarouselOptimized() {
-        // Filter image list just in case
-        allPhotos = availablePhotos.filter(p => p.match(/\.(jpe?g|png|webp)$/i));
-        // prioritise a few key photos at front
-        const priority = ['ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg'];
-        const prioritySet = new Set(priority);
-        const other = allPhotos.filter(p => !prioritySet.has(p));
-        // shuffle others
-        shuffleArrayInplace(other);
-        allPhotos = [...priority.filter(p => allPhotos.includes(p)), ...other];
-
-        // group into slides of 3
-        const photoSlides = [];
-        for (let i = 0; i < allPhotos.length; i += 3) photoSlides.push(allPhotos.slice(i, i + 3));
-        totalSlides = photoSlides.length;
-
-        // render slides placeholders
-        const carousel = document.getElementById('photoCarousel');
-        carousel.innerHTML = '';
-        photoSlides.forEach((slidePhotos, idx) => {
-            const slide = document.createElement('div');
-            slide.className = 'carousel-slide';
-            slide.setAttribute('data-slide', idx);
-            slide.setAttribute('aria-hidden', idx === 0 ? 'false' : 'true');
-
-            slidePhotos.forEach((photo, pIdx) => {
-                const item = document.createElement('div');
-                item.className = 'carousel-item loading';
-                item.setAttribute('data-photo', photo);
-                item.setAttribute('data-index', idx);
-                item.setAttribute('role', 'img');
-                item.setAttribute('aria-label', `Photo ${idx*3 + pIdx + 1}`);
-                // the actual background will be set when loading occurs
-                item.style.backgroundColor = 'var(--soft-pink)';
-                slide.appendChild(item);
+                carousel.appendChild(slide);
             });
 
-            carousel.appendChild(slide);
-        });
+            createDots();
+            
+            // Load first slide immediately
+            loadSlide(0);
+            
+            // Start auto-slide
+            startAutoSlide();
 
-        createDots();
-        // make observer for slides
-        makeSlideObserver();
+            // Setup hover pause
+            const container = document.querySelector('.carousel-container');
+            container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+            container.addEventListener('mouseleave', () => restartAutoSlide());
 
-        // observe first two slides immediately to load priority images
-        const slides = document.querySelectorAll('.carousel-slide');
-        if (slides.length) {
-            // load first slide eagerly (high priority)
-            loadSlideByIndex(0, 'high');
-            // preload slides 1 & 2 in background
-            preloadSlides([1,2,3], 2);
-            // observe remaining slides
-            slides.forEach((s, i) => {
-                if (i > 0 && slideObserver) slideObserver.observe(s);
-            });
+            // Hide page loader
+            setTimeout(() => {
+                document.getElementById('pageLoader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('pageLoader').style.display = 'none';
+                }, 500);
+            }, 1000);
         }
 
-        // setup hover pause
-        const container = document.querySelector('.carousel-container');
-        container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
-        container.addEventListener('mouseleave', () => restartAutoSlide());
-
-        startAutoSlide();
-    }
-
-    /* ---------- Helpers: load slide, load item ---------- */
-    async function loadSlideByIndex(index, priority='normal') {
-        const slide = document.querySelector(`.carousel-slide[data-slide="${index}"]`);
-        if (!slide) return;
-        slide.setAttribute('aria-hidden', 'false');
-
-        const items = Array.from(slide.querySelectorAll('.carousel-item'));
-        await Promise.allSettled(items.map(it => loadItemElement(it, priority)));
-    }
-
-    async function loadSlideElements(slideEl, priority='normal') {
-        const items = Array.from(slideEl.querySelectorAll('.carousel-item.loading'));
-        await Promise.allSettled(items.map(it => loadItemElement(it, priority)));
-    }
-
-    async function loadItemElement(item, priority='normal') {
-        const photo = item.getAttribute('data-photo');
-        const url = assetsBase + photo;
-
-        // Avoid re-loading if already loaded
-        if (item.classList.contains('loaded')) return;
-
-        try {
-            // use cache manager
-            await cacheManager.load(url, priority);
-
-            // apply background + style
-            item.style.backgroundImage = `url('${url}')`;
-            item.classList.remove('loading');
-            item.classList.add('loaded');
-            item.style.opacity = '1';
-        } catch (err) {
-            console.warn('Image failed', url, err);
-            item.classList.remove('loading');
-            item.classList.add('error');
-            const fallbackText = item.getAttribute('data-fallback') || '💕 Beautiful memory';
-            item.textContent = fallbackText;
-            item.style.backgroundImage = 'none';
-        }
-    }
-
-    /* ---------- Preloading upcoming slides in batches ---------- */
-    async function preloadSlides(indices = [], batchSize = 3) {
-        const toPrefetch = [];
-        indices.forEach(i => {
-            const slide = document.querySelector(`.carousel-slide[data-slide="${i}"]`);
+        /* Fast image loading function */
+        function loadSlide(slideIndex) {
+            const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
             if (!slide) return;
-            slide.querySelectorAll('.carousel-item[data-photo]').forEach(it => {
-                const photo = it.getAttribute('data-photo');
-                const url = assetsBase + photo;
-                if (!cacheManager.cache.has(url) && !cacheManager.loading.has(url)) {
-                    toPrefetch.push(url);
+
+            const items = slide.querySelectorAll('.carousel-item.loading');
+            
+            items.forEach(item => {
+                const photo = item.getAttribute('data-photo');
+                const img = new Image();
+                
+                img.onload = function() {
+                    item.style.backgroundImage = `url('${assetsBase}${photo}')`;
+                    item.classList.remove('loading');
+                    item.classList.add('loaded');
+                };
+                
+                img.onerror = function() {
+                    item.classList.remove('loading');
+                    item.classList.add('error');
+                    item.textContent = '💕 Beautiful Memory';
+                };
+                
+                // Start loading
+                img.src = assetsBase + photo;
+            });
+        }
+
+        /* Preload next slides */
+        function preloadSlides() {
+            // Preload next 2 slides
+            const nextSlides = [
+                (currentSlide + 1) % totalSlides,
+                (currentSlide + 2) % totalSlides
+            ];
+            
+            nextSlides.forEach(slideIndex => {
+                const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
+                if (!slide) return;
+                
+                const unloadedItems = slide.querySelectorAll('.carousel-item.loading');
+                unloadedItems.forEach(item => {
+                    const photo = item.getAttribute('data-photo');
+                    const img = new Image();
+                    img.src = assetsBase + photo; // Preload in background
+                });
+            });
+        }
+
+        /* Navigation functions */
+        function createDots() {
+            const dotsContainer = document.getElementById('carouselDots');
+            dotsContainer.innerHTML = '';
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+        }
+
+        function previousSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+
+        function goToSlide(slideIndex) {
+            currentSlide = slideIndex;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const carousel = document.getElementById('photoCarousel');
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+            
+            // Load current slide
+            loadSlide(currentSlide);
+            
+            // Preload upcoming slides
+            setTimeout(() => preloadSlides(), 100);
+            
+            restartAutoSlide();
+        }
+
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(nextSlide, 4000);
+        }
+
+        function restartAutoSlide() {
+            clearInterval(autoSlideInterval);
+            startAutoSlide();
+        }
+
+        /* RSVP Functions */
+        async function rsvp(status) {
+            if (!currentGuest) return;
+            
+            try {
+                const response = await fetch('/api/rsvp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: currentGuest.phone, 
+                        status: status 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentGuest.rsvp_status = status;
+                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+                    updateRSVPStatus();
+                    
+                    if (status === 'accepted') {
+                        showConfetti();
+                        alert("🎉 Thank you! We can't wait to celebrate with you!");
+                    } else {
+                        alert("💔 We'll miss you, but we understand!");
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to save RSVP');
                 }
+            } catch (error) {
+                console.warn('RSVP API failed, using offline mode:', error);
+                
+                // Offline fallback
+                currentGuest.rsvp_status = status;
+                sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+                updateRSVPStatus();
+                
+                if (status === 'accepted') {
+                    showConfetti();
+                    alert("🎉 Thank you! (Saved locally - will sync when online)");
+                } else {
+                    alert("💔 We'll miss you! (Saved locally - will sync when online)");
+                }
+            }
+        }
+
+        function updateRSVPStatus() {
+            const statusDiv = document.getElementById('rsvpStatus');
+            const status = currentGuest?.rsvp_status;
+            
+            if (status === 'accepted') {
+                statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
+                statusDiv.style.color = 'var(--gold)';
+            } else if (status === 'declined') {
+                statusDiv.innerHTML = '❌ You\'ll be missed!';
+                statusDiv.style.color = 'var(--rose)';
+            } else {
+                statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
+                statusDiv.style.color = 'var(--burgundy)';
+            }
+        }
+
+        /* Visual Effects */
+        function showConfetti() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => createConfetti(), i * 100);
+            }
+        }
+
+        function createConfetti() {
+            const emojis = ['🎉', '🎊', '✨', '💫', '🌟', '💍', '💕'];
+            const confetti = document.createElement('div');
+            
+            confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            confetti.style.cssText = `
+                position: fixed;
+                left: ${Math.random() * 100}vw;
+                top: -10px;
+                font-size: ${15 + Math.random() * 25}px;
+                pointer-events: none;
+                z-index: 9999;
+                animation: fall ${3 + Math.random() * 2}s linear forwards;
+            `;
+            
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 6000);
+        }
+
+        function startFloatingHearts() {
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = Math.random() > 0.5 ? '💕' : '💖';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.fontSize = (15 + Math.random() * 20) + 'px';
+                heart.style.animationDuration = (4 + Math.random() * 3) + 's';
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 8000);
+            }, 2000);
+        }
+
+        function playWeddingMusic() {
+            const audio = document.getElementById('weddingMusic');
+            audio.volume = 0.3;
+            audio.play().catch(() => {
+                // Create music enable button if autoplay fails
+                const musicBtn = document.createElement('button');
+                musicBtn.textContent = '🎵 Enable Music';
+                musicBtn.style.cssText = `
+                    position: fixed; top: 70px; right: 20px; 
+                    background: var(--gold); color: white; 
+                    border: none; padding: 0.5rem 1rem; 
+                    border-radius: 20px; z-index: 1000; cursor: pointer;
+                `;
+                musicBtn.onclick = () => {
+                    audio.play();
+                    musicBtn.remove();
+                };
+                document.body.appendChild(musicBtn);
             });
-        });
-
-        // fetch in small batches
-        for (let i = 0; i < toPrefetch.length; i += batchSize) {
-            const batch = toPrefetch.slice(i, i + batchSize);
-            await Promise.allSettled(batch.map(u => cacheManager.load(u, 'low')));
-            updateLoadingProgress(i + batch.length, toPrefetch.length);
-            // small pause
-            await new Promise(r => setTimeout(r, 120));
         }
-    }
 
-    /* ---------- Update progress bar ---------- */
-    function updateLoadingProgress(done, total) {
-        const bar = document.getElementById('loadingProgress');
-        if (!bar) return;
-        if (total === 0) { bar.style.width = '0%'; return; }
-        const pct = Math.min(100, Math.round((done / total) * 100));
-        bar.style.width = pct + '%';
-        if (pct >= 100) setTimeout(()=> bar.style.width = '0%', 700);
-    }
-
-    /* ---------- Dots and navigation ---------- */
-    function createDots() {
-        const dotsContainer = document.getElementById('carouselDots');
-        dotsContainer.innerHTML = '';
-        for (let i=0;i<totalSlides;i++){
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            dot.setAttribute('role','tab');
-            dot.setAttribute('aria-selected', i===0 ? 'true' : 'false');
-            if (i===0) dot.classList.add('active');
-            dot.addEventListener('click', ()=> goToSlide(i));
-            dotsContainer.appendChild(dot);
-        }
-    }
-
-    async function nextSlide() {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        await updateCarousel();
-    }
-
-    async function previousSlide() {
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        await updateCarousel();
-    }
-
-    async function goToSlide(i) {
-        currentSlide = i;
-        await updateCarousel();
-    }
-
-    async function updateCarousel() {
-        const carousel = document.getElementById('photoCarousel');
-        carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
-        // update dots
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, idx) => {
-            d.classList.toggle('active', idx === currentSlide);
-            d.setAttribute('aria-selected', idx === currentSlide ? 'true' : 'false');
-        });
-
-        // load current slide with high priority
-        await loadSlideByIndex(currentSlide, 'high');
-
-        // preload next 2 slides
-        const upcoming = [currentSlide + 1, currentSlide + 2, currentSlide + 3].map(n => (n % totalSlides + totalSlides) % totalSlides);
-        preloadSlides(upcoming, 3);
-
-        restartAutoSlide();
-    }
-
-    function startAutoSlide() {
-        if (autoSlideInterval) clearInterval(autoSlideInterval);
-        autoSlideInterval = setInterval(() => nextSlide(), 5000);
-    }
-
-    function restartAutoSlide() {
-        clearInterval(autoSlideInterval);
-        startAutoSlide();
-    }
-
-    /* ---------- Utility: shuffle ---------- */
-    function shuffleArrayInplace(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
-    /* ---------- RSVP, Music, Hearts, Confetti, Logout ---------- */
-    async function rsvp(status) {
-        if (!currentGuest) return;
-        // Try to persist to server; fallback to local storage
-        try {
-            const res = await fetch('/api/rsvp', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ phone: currentGuest?.phone, status })
-            });
-            const result = await res.json();
-            if (!result.success) throw new Error(result.error || 'Server error');
-            currentGuest.rsvp_status = status;
-            sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-            updateRSVPStatus();
-            if (status === 'accepted') { showConfetti(); alert("🎉 Thank you! Can't wait!"); }
-            else alert("💔 We'll miss you!");
-        } catch (err) {
-            // offline fallback
-            console.warn('RSVP fallback (offline)', err);
-            currentGuest.rsvp_status = status;
-            sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-            updateRSVPStatus();
-            if (status === 'accepted') { showConfetti(); alert("🎉 Thank you! (Offline mode)"); }
-            else alert("💔 We'll miss you! (Offline mode)");
-        }
-    }
-
-    function updateRSVPStatus() {
-        const statusDiv = document.getElementById('rsvpStatus');
-        const s = currentGuest?.rsvp_status;
-        if (s === 'accepted') {
-            statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
-            statusDiv.style.color = 'var(--gold)';
-        } else if (s === 'declined') {
-            statusDiv.innerHTML = '❌ You\'ll be missed!';
-            statusDiv.style.color = 'var(--rose)';
-        } else {
-            statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
-            statusDiv.style.color = 'var(--burgundy)';
-        }
-    }
-
-    function showConfetti() {
-        for (let i=0;i<30;i++){
-            setTimeout(()=> createConfetti(), i*90);
-        }
-    }
-
-    function createConfetti(){
-        const emojis = ['🎉','🎊','✨','💫','🌟','💍','💕'];
-        const el = document.createElement('div');
-        el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-        el.style.cssText = `
-            position: fixed;
-            left: ${Math.random()*95}vw;
-            top: -10px;
-            font-size: ${12 + Math.random()*24}px;
-            pointer-events: none;
-            z-index: 9999;
-            transform: rotate(${Math.random()*360}deg);
-            animation: fall ${3 + Math.random()*2}s linear forwards;
-        `;
-        document.body.appendChild(el);
-        setTimeout(()=> el.remove(), 5500);
-    }
-
-    function logout() {
-        sessionStorage.removeItem('currentGuest');
-        window.location.href = 'index.html';
-    }
-
-    function playWeddingMusic() {
-        const audio = document.getElementById('weddingMusic');
-        if (!audio) return;
-        audio.volume = 0.32;
-        audio.play().catch(e=>{
-            // show a small enable button
-            const b = document.createElement('button');
-            b.textContent = '🎵 Enable Music';
-            b.style.cssText = 'position:fixed;top:70px;right:20px;background:var(--gold);color:#fff;border:none;padding:.5rem 1rem;border-radius:20px;z-index:1000;';
-            b.addEventListener('click', ()=> { audio.play().catch(()=>{}); b.remove(); }, { once:true });
-            document.body.appendChild(b);
-        });
-    }
-
-    function startFloatingHearts() {
-        setInterval(()=> {
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            heart.textContent = Math.random() > 0.5 ? '💕' : '💖';
-            heart.style.left = Math.random() * window.innerWidth + 'px';
-            heart.style.fontSize = (10 + Math.random() * 20) + 'px';
-            heart.style.animationDuration = (4 + Math.random() * 4) + 's';
-            document.body.appendChild(heart);
-            setTimeout(()=> heart.remove(), 8000);
-        }, 1200);
-    }
-
-    /* ---------- Page load initialize ---------- */
-    window.addEventListener('load', async () => {
-        // guest check
-        const guestData = sessionStorage.getItem('currentGuest');
-        if (!guestData) {
-            // if missing guest, redirect to index (your original logic)
+        function logout() {
+            sessionStorage.removeItem('currentGuest');
             window.location.href = 'index.html';
-            return;
         }
-        currentGuest = JSON.parse(guestData);
-        document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
 
-        // initialize carousel
-        initializeCarouselOptimized();
+        /* Page Initialization */
+        window.addEventListener('DOMContentLoaded', function() {
+            // Check for guest data
+            const guestData = sessionStorage.getItem('currentGuest');
+            if (!guestData) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentGuest = JSON.parse(guestData);
+            document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
+            
+            // Initialize everything
+            initializeCarousel();
+            updateRSVPStatus();
+            playWeddingMusic();
+            startFloatingHearts();
+        });
 
-        // update RSVP UI
-        updateRSVPStatus();
+        // Keyboard navigation
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
 
-        // music & hearts
-        playWeddingMusic();
-        startFloatingHearts();
+        // Pause carousel when page is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(autoSlideInterval);
+            } else {
+                restartAutoSlide();
+            }
+        });
 
-        // register service worker
-        registerServiceWorker().catch(()=>{ /* best-effort */ });
-    });
-
-    // small CSS for confetti animation appended programmatically:
-    (function addConfettiKeyframes(){
+        // Add CSS for confetti animation
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fall {
-                to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+                to { 
+                    transform: translateY(110vh) rotate(720deg); 
+                    opacity: 0; 
+                }
             }
         `;
         document.head.appendChild(style);
-    })();
-
-    /*****************************************************************
-     * Accessibility: keyboard navigation for carousel
-     *****************************************************************/
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') previousSlide();
-        if (e.key === 'ArrowRight') nextSlide();
-    });
-
-    /* ---------- Pause auto-slide on interaction ---------- */
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) clearInterval(autoSlideInterval);
-        else restartAutoSlide();
-    });
-
     </script>
 </body>
 </html>

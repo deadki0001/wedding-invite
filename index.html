@@ -163,60 +163,11 @@
       background: rgba(0,0,0,0.5);
       transform: scale(1.05);
     }
-
-    /* Test user info */
-    .test-info {
-      background: rgba(212, 175, 55, 0.1);
-      border: 1px solid var(--gold);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem 0;
-      font-size: 0.8rem;
-      color: var(--burgundy);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .test-info:hover {
-      background: rgba(212, 175, 55, 0.2);
-      transform: scale(1.02);
-    }
-
-    .test-info h4 {
-      margin-bottom: 0.5rem;
-      color: var(--gold);
-    }
-
-    /* Add a direct link option for testing */
-    .debug-section {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(0,0,0,0.05);
-      border-radius: 8px;
-      font-size: 0.8rem;
-    }
-
-    .debug-link {
-      color: var(--burgundy);
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .debug-link:hover {
-      color: var(--gold);
-    }
   </style>
 </head>
 <body>
   <div class="login-card">
-    <h2>You're Invited ✨ <span>🚀</span></h2>
-    
-    <!-- Test user info -->
-    <div class="test-info" onclick="fillTestCredentials()">
-      <h4>🧪 Test Login (Click to fill)</h4>
-      <p><strong>Phone:</strong> +27641234567</p>
-      <p><strong>Password:</strong> ADMIN123</p>
-    </div>
+    <h2>You're Invited ✨ <span>💍</span></h2>
     
     <form onsubmit="handleLogin(event)" id="loginForm">
       <input type="text" id="phone" placeholder="Cellphone Number (+27...)" required />
@@ -227,23 +178,12 @@
     <div class="error-message" id="errorMessage"></div>
     <div class="success-message" id="successMessage"></div>
     
-    <!-- Debug section for testing -->
-    <div class="debug-section">
-      <p>🔧 Testing? <a href="main.html" class="debug-link">Go directly to main page</a></p>
-      <p style="font-size: 0.7rem; color: #666;">Note: This bypasses login for testing purposes</p>
-    </div>
-    
     <div class="footer-note">Made with love for our special day💍</div>
   </div>
 
   <a href="admin.html" class="admin-link">🔒 Admin Panel</a>
 
   <script>
-    function fillTestCredentials() {
-      document.getElementById('phone').value = '+27641234567';
-      document.getElementById('password').value = 'ADMIN123';
-    }
-
     async function handleLogin(event) {
       event.preventDefault();
       
@@ -316,10 +256,7 @@
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
           errorDiv.innerHTML = `
             <strong>⚠️ Backend Connection Error</strong><br>
-            The server appears to be down. For testing, you can:<br>
-            <a href="main.html" style="color: var(--gold); text-decoration: underline;">
-              Continue to main page anyway
-            </a>
+            The server appears to be down. Please try again later or contact support.
           `;
         } else {
           errorDiv.textContent = 'Connection error. Please try again.';
@@ -350,34 +287,7 @@
       }
       
       console.log('Login page loaded');
-      
-      // For testing: Create a mock guest if none exists and we're testing
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('test') === 'true') {
-        const mockGuest = {
-          name: 'Test User',
-          phone: '+27641234567',
-          rsvp_status: 'pending'
-        };
-        sessionStorage.setItem('currentGuest', JSON.stringify(mockGuest));
-        window.location.href = 'main.html';
-      }
     };
-
-    // Add keyboard shortcut for testing
-    document.addEventListener('keydown', function(e) {
-      // Ctrl+Shift+T to go directly to main page for testing
-      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
-        console.log('Test shortcut activated');
-        const mockGuest = {
-          name: 'Test User',
-          phone: '+27641234567',
-          rsvp_status: 'pending'
-        };
-        sessionStorage.setItem('currentGuest', JSON.stringify(mockGuest));
-        window.location.href = 'main.html';
-      }
-    });
   </script>
 </body>
 </html>

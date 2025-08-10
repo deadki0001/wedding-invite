@@ -22,6 +22,80 @@
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
+
+        /* Login Screen Styles */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-card h1 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .login-input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .error-msg {
+            color: #e53e3e;
+            background: #fed7d7;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Admin Panel Styles */
+        .admin-panel {
+            display: none;
+        }
         
         h1 {
             text-align: center;
@@ -200,70 +274,163 @@
             color: #667eea;
             font-style: italic;
         }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            z-index: 1000;
+        }
+        
+        .logout-btn:hover {
+            background: #c53030;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌟 Wedding Admin Panel 💍</h1>
-        
-        <!-- Add Guest Form -->
-        <div class="form-section">
-            <h2>Add New Guest</h2>
-            <form id="addGuestForm">
-                <div class="form-row">
-                    <input type="text" id="guestName" placeholder="Guest Name" required>
-                    <input type="tel" id="guestPhone" placeholder="Phone Number (e.g., 0646191448)" required>
-                    <button type="submit" class="btn-primary">Add Guest</button>
-                </div>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <h1>🔒 Admin Login</h1>
+            <form class="login-form" onsubmit="handleAdminLogin(event)">
+                <input type="text" id="adminUsername" class="login-input" placeholder="Username" required>
+                <input type="password" id="adminPassword" class="login-input" placeholder="Password" required>
+                <button type="submit" class="login-btn">Login</button>
             </form>
+            <div id="loginError" class="error-msg"></div>
         </div>
+    </div>
 
-        <!-- Bulk Actions -->
-        <div class="form-section">
-            <h2>Bulk Actions</h2>
-            <div class="bulk-actions">
-                <button onclick="deleteTestGuests()" class="btn-danger">Delete Test Guests</button>
-                <button onclick="deleteAllGuests()" class="btn-danger" style="background: #c53030;">⚠️ Delete ALL Guests</button>
-                <button onclick="sendAllInvites()" class="btn-primary">Send All Pending Invites</button>
+    <!-- Admin Panel (hidden initially) -->
+    <div id="adminPanel" class="admin-panel">
+        <div class="container">
+            <button class="logout-btn" onclick="adminLogout()">🚪 Logout</button>
+            
+            <h1>🌟 Wedding Admin Panel 💍</h1>
+            
+            <!-- Add Guest Form -->
+            <div class="form-section">
+                <h2>Add New Guest</h2>
+                <form id="addGuestForm">
+                    <div class="form-row">
+                        <input type="text" id="guestName" placeholder="Guest Name" required>
+                        <input type="tel" id="guestPhone" placeholder="Phone Number (e.g., 0646191448)" required>
+                        <button type="submit" class="btn-primary">Add Guest</button>
+                    </div>
+                </form>
             </div>
-        </div>
-        
-        <!-- Messages -->
-        <div id="message"></div>
-        <div id="loading" class="loading">Processing...</div>
-        
-        <!-- Guests List -->
-        <div class="guest-section">
-            <h2>Guest List</h2>
-            <table class="guest-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Password</th>
-                        <th>Invite Status</th>
-                        <th>RSVP Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="guestsList">
-                    <tr><td colspan="6" style="text-align: center; color: #666;">Loading guests...</td></tr>
-                </tbody>
-            </table>
+
+            <!-- Bulk Actions -->
+            <div class="form-section">
+                <h2>Bulk Actions</h2>
+                <div class="bulk-actions">
+                    <button onclick="deleteTestGuests()" class="btn-danger">Delete Test Guests</button>
+                    <button onclick="deleteAllGuests()" class="btn-danger" style="background: #c53030;">⚠️ Delete ALL Guests</button>
+                    <button onclick="sendAllInvites()" class="btn-primary">Send All Pending Invites</button>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div id="message"></div>
+            <div id="loading" class="loading">Processing...</div>
+            
+            <!-- Guests List -->
+            <div class="guest-section">
+                <h2>Guest List</h2>
+                <table class="guest-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Password</th>
+                            <th>Invite Status</th>
+                            <th>RSVP Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guestsList">
+                        <tr><td colspan="6" style="text-align: center; color: #666;">Loading guests...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
         let guests = [];
+        let isAdminLoggedIn = false;
 
-        // Load guests on page load
+        // Check admin session on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadGuests();
+            const adminSession = sessionStorage.getItem('adminLoggedIn');
+            if (adminSession === 'true') {
+                showAdminPanel();
+                loadGuests();
+            } else {
+                showLoginScreen();
+            }
         });
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            // Clear previous errors
+            errorDiv.style.display = 'none';
+            
+            // Check credentials
+            if (username === 'lanese' && password === 'Catherine123') {
+                // Successful login
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                showAdminPanel();
+                loadGuests();
+            } else {
+                // Failed login
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.style.display = 'block';
+                
+                // Clear form
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminPanel').style.display = 'none';
+            isAdminLoggedIn = false;
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            isAdminLoggedIn = true;
+        }
+
+        function adminLogout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            showLoginScreen();
+        }
 
         // Add guest form handler
         document.getElementById('addGuestForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            if (!isAdminLoggedIn) {
+                showMessage('Please log in first', 'error');
+                return;
+            }
             
             const name = document.getElementById('guestName').value.trim();
             const phone = document.getElementById('guestPhone').value.trim();
@@ -301,6 +468,8 @@
 
         // Load guests from API
         function loadGuests() {
+            if (!isAdminLoggedIn) return;
+            
             fetch('/api/guests')
                 .then(response => response.json())
                 .then(data => {
@@ -362,6 +531,8 @@
 
         // Send invite to specific guest
         function sendInvite(guestId) {
+            if (!isAdminLoggedIn) return;
+            
             showLoading(true);
             
             fetch(`/api/send_invite/${guestId}`, {
@@ -385,6 +556,8 @@
 
         // Delete specific guest
         function deleteGuest(guestId, guestName) {
+            if (!isAdminLoggedIn) return;
+            
             if (!confirm(`Are you sure you want to delete "${guestName}"?`)) {
                 return;
             }
@@ -412,6 +585,8 @@
 
         // Delete test guests
         function deleteTestGuests() {
+            if (!isAdminLoggedIn) return;
+            
             if (!confirm('Delete all test guests? (Names containing: test, demo, example, dummy, sample, fake)')) {
                 return;
             }
@@ -438,6 +613,8 @@
 
         // Delete ALL guests
         function deleteAllGuests() {
+            if (!isAdminLoggedIn) return;
+            
             if (!confirm('⚠️ DELETE ALL GUESTS? This cannot be undone!')) {
                 return;
             }
@@ -465,6 +642,8 @@
 
         // Send all pending invites
         function sendAllInvites() {
+            if (!isAdminLoggedIn) return;
+            
             const pendingGuests = guests.filter(g => !g.invite_sent);
             
             if (pendingGuests.length === 0) {
