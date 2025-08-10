@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Setup Guide</title>
+    <title>Wedding Admin Panel</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
-            line-height: 1.6;
             background: linear-gradient(135deg, #f8cfd5, #fbeaea);
             min-height: 100vh;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             padding: 2rem;
             margin: 1rem 0;
@@ -36,38 +35,40 @@
             padding-bottom: 0.5rem;
         }
         
-        .step {
+        .provider-status {
             background: rgba(212, 175, 55, 0.1);
-            border-left: 4px solid #d4af37;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .code-block {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            margin: 0.5rem 0;
-            overflow-x: auto;
-        }
-        
-        .warning {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid #ffc107;
-            border-radius: 8px;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
             padding: 1rem;
             margin: 1rem 0;
         }
         
-        .success {
-            background: rgba(40, 167, 69, 0.1);
-            border: 1px solid #28a745;
-            border-radius: 8px;
-            padding: 1rem;
+        .provider-status.success { border-color: #28a745; background: rgba(40, 167, 69, 0.1); }
+        .provider-status.error { border-color: #dc3545; background: rgba(220, 53, 69, 0.1); }
+        
+        .form-group {
             margin: 1rem 0;
+        }
+        
+        label {
+            display: block;
+            color: #7b1e3b;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #f8cfd5;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #d46a7c;
         }
         
         .button {
@@ -76,8 +77,11 @@
             color: white;
             padding: 0.8rem 1.5rem;
             text-decoration: none;
+            border: none;
             border-radius: 25px;
             margin: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
             transition: all 0.3s ease;
         }
         
@@ -87,103 +91,230 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
-        .quick-fix {
-            background: rgba(123, 30, 59, 0.05);
-            border: 2px dashed #7b1e3b;
-            border-radius: 10px;
-            padding: 1.5rem;
+        .button.success { background: #28a745; }
+        .button.warning { background: #ffc107; color: #000; }
+        .button.danger { background: #dc3545; }
+        .button.bulk { background: #d4af37; color: #000; font-weight: bold; }
+        
+        .guests-table {
+            width: 100%;
+            border-collapse: collapse;
             margin: 1rem 0;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
         }
-
-        .redirect-notice {
-            background: rgba(220, 53, 69, 0.1);
-            border: 2px solid #dc3545;
+        
+        .guests-table thead, .guests-table tbody {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        
+        .guests-table th,
+        .guests-table td {
+            border: 1px solid #f8cfd5;
+            padding: 0.8rem;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .guests-table th {
+            background: #d46a7c;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .guests-table tr:nth-child(even) {
+            background: rgba(248, 207, 213, 0.3);
+        }
+        
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .status-pending { background: #ffc107; color: #000; }
+        .status-accepted { background: #28a745; color: white; }
+        .status-declined { background: #dc3545; color: white; }
+        .invite-sent { background: #17a2b8; color: white; }
+        .invite-not-sent { background: #6c757d; color: white; }
+        
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #7b1e3b;
+        }
+        
+        .stat-label {
+            color: #d46a7c;
+            font-size: 0.9rem;
+        }
+        
+        .bulk-actions {
+            background: rgba(212, 175, 55, 0.05);
+            border: 2px dashed #d4af37;
             border-radius: 10px;
             padding: 1.5rem;
             margin: 1rem 0;
             text-align: center;
         }
+        
+        .message-log {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+        }
+        
+        .navigation {
+            background: rgba(123, 30, 59, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .nav-links a {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #7b1e3b;
+            color: white;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background: #d46a7c;
+            transform: translateY(-1px);
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .stats-row {
+                flex-direction: column;
+            }
+            
+            .guests-table {
+                font-size: 0.85rem;
+            }
+            
+            .guests-table th,
+            .guests-table td {
+                padding: 0.5rem;
+            }
+            
+            .button {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+                margin: 0.25rem;
+            }
+        }
+        
+        /* Loading animations */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: "...";
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { color: transparent; text-shadow: .25em 0 0 transparent, .5em 0 0 transparent; }
+            40% { color: currentColor; text-shadow: .25em 0 0 transparent, .5em 0 0 transparent; }
+            60% { color: currentColor; text-shadow: .25em 0 0 currentColor, .5em 0 0 transparent; }
+            80%, 100% { color: currentColor; text-shadow: .25em 0 0 currentColor, .5em 0 0 currentColor; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🚀 Wedding Invitation Admin Panel</h1>
-        
-        <div class="redirect-notice">
-            <h3>🔄 Redirecting to Admin Panel in 3 seconds...</h3>
-            <p>If you're not automatically redirected, click the button below:</p>
-            <a href="/admin" class="button">🔗 Go to Admin Panel</a>
-        </div>
-        
-        <div class="warning">
-            <strong>⚠️ Production Setup:</strong> This appears to be your production environment. The admin panel is available at <code>/admin</code> (without .html extension).
-        </div>
-        
-        <h2>🛠️ Production Access</h2>
-        
-        <div class="quick-fix">
-            <h3>Correct URLs for Production</h3>
-            <div class="step">
-                <strong>Admin Panel:</strong>
-                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/admin</div>
-            </div>
-            <div class="step">
-                <strong>Main Site:</strong>
-                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/</div>
-            </div>
-            <div class="step">
-                <strong>Test API:</strong>
-                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/api/test_whatsapp</div>
-            </div>
-            <a href="/admin" class="button">🔗 Access Admin Panel</a>
-        </div>
-        
-        <h2>🔍 Troubleshooting</h2>
-        
-        <div class="step">
-            <strong>If you see localhost references:</strong>
-            <ul>
-                <li>Update your environment variables</li>
-                <li>Restart your Flask application</li>
-                <li>Clear browser cache</li>
-            </ul>
-        </div>
-        
-        <div class="step">
-            <strong>Environment Variables Check:</strong>
-            <div class="code-block">
-# In your .env file:
-FLASK_ENV=production
-HOST=0.0.0.0
-PORT=5000
-WEDDING_LOGIN_URL=https://wedding-invitation.adkinsfamily.co.za/
-            </div>
-        </div>
-        
-        <h2>✅ Next Steps</h2>
-        
-        <div class="success">
-            <ol>
-                <li>Click the admin panel link above</li>
-                <li>Check your WasenderAPI status</li>
-                <li>Add your wedding guests</li>
-                <li>Send beautiful wedding invitations! 🎉</li>
-            </ol>
+    <div class="navigation">
+        <h3>🚀 Wedding Management System</h3>
+        <div class="nav-links">
+            <a href="/">🏠 Main Site</a>
+            <a href="/main.html">💍 Wedding Page</a>
+            <a href="/admin">⚙️ Admin Panel</a>
+            <a href="#" onclick="exportGuestList()">📊 Export CSV</a>
         </div>
     </div>
 
-    <script>
-        // Countdown & redirect logic
-        let countdown = 3;
-        const countdownElement = document.querySelector('.redirect-notice h3');
-        const interval = setInterval(() => {
-            countdownElement.textContent = `🔄 Redirecting to Admin Panel in ${countdown} seconds...`;
-            countdown--;
-            if (countdown < 0) {
-                clearInterval(interval);
-                window.location.href = '/admin';
-            }
-        }, 1000);
-    </script>
-</body>
-</html>
+    <div class="card">
+        <h1>💍 Wedding Admin Panel 🚀</h1>
+        
+        <!-- Provider Status -->
+        <div id="providerStatus" class="provider-status">
+            <h3>📡 Checking WhatsApp provider...</h3>
+        </div>
+        
+        <!-- Stats Dashboard -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-number" id="totalGuests">0</div>
+                <div class="stat-label">Total Guests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="invitesSent">0</div>
+                <div class="stat-label">Invites Sent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rsvpAccepted">0</div>
+                <div class="stat-label">RSVP Yes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rsvpDeclined">0</div>
+                <div class="stat-label">RSVP No</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rsvpPending">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <h3>🚀 Bulk Actions</h3>
+            <p>Send wedding invites to all guests who haven't received one yet!</p>
+            <button class="button bulk" onclick="sendAllInvites()">📱 Send All Pending Invites</button>
+            <button class="button" onclick="loadGuests()">🔄 Refresh Guest List</button>
+            <button class="button warning" onclick="testWhatsApp()">🧪 Test WhatsApp</button>
+        </div>
+        
+        <!-- Add Guest Form -->
