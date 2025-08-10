@@ -6,534 +6,469 @@
     <title>Wedding Admin Panel</title>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background: linear-gradient(135deg, #f8cfd5, #fbeaea);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: #333;
         }
         
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 2rem;
-            margin: 1rem 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         
         h1 {
-            color: #7b1e3b;
             text-align: center;
-            margin-bottom: 2rem;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
         }
         
-        h2 {
-            color: #d46a7c;
-            border-bottom: 2px solid #f8cfd5;
-            padding-bottom: 0.5rem;
+        .form-section, .guest-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 15px;
+            border: 1px solid #e9ecef;
         }
         
-        .provider-status {
-            background: rgba(212, 175, 55, 0.1);
-            border: 2px solid #d4af37;
-            border-radius: 10px;
-            padding: 1rem;
-            margin: 1rem 0;
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
         }
         
-        .provider-status.success { border-color: #28a745; background: rgba(40, 167, 69, 0.1); }
-        .provider-status.error { border-color: #dc3545; background: rgba(220, 53, 69, 0.1); }
-        
-        .form-group {
-            margin: 1rem 0;
-        }
-        
-        label {
-            display: block;
-            color: #7b1e3b;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #f8cfd5;
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
         
-        input:focus, select:focus {
+        input:focus {
             outline: none;
-            border-color: #d46a7c;
+            border-color: #667eea;
         }
         
-        .button {
-            display: inline-block;
-            background: #7b1e3b;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            text-decoration: none;
+        button {
+            padding: 12px 24px;
             border: none;
-            border-radius: 25px;
-            margin: 0.5rem;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
         }
         
-        .button:hover {
-            background: #d46a7c;
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
-        .button.success { background: #28a745; }
-        .button.warning { background: #ffc107; color: #000; }
-        .button.danger { background: #dc3545; }
-        .button.bulk { background: #d4af37; color: #000; font-weight: bold; }
+        .btn-send {
+            background: #48bb78;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-right: 8px;
+        }
         
-        .guests-table {
+        .btn-send:hover {
+            background: #38a169;
+        }
+        
+        .btn-send:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        .btn-delete {
+            background: #f56565;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        
+        .btn-delete:hover {
+            background: #e53e3e;
+        }
+        
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+            margin-left: 10px;
+        }
+        
+        .btn-danger:hover {
+            background: #c53030;
+        }
+        
+        .guest-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1rem 0;
-            overflow-x: auto;
-            display: block;
-            white-space: nowrap;
+            margin-top: 20px;
         }
         
-        .guests-table thead, .guests-table tbody {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-        }
-        
-        .guests-table th,
-        .guests-table td {
-            border: 1px solid #f8cfd5;
-            padding: 0.8rem;
+        .guest-table th,
+        .guest-table td {
+            padding: 12px;
             text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .guests-table th {
-            background: #d46a7c;
+        .guest-table th {
+            background: #667eea;
             color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-        
-        .guests-table tr:nth-child(even) {
-            background: rgba(248, 207, 213, 0.3);
-        }
-        
-        .status-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.85rem;
             font-weight: bold;
-            white-space: nowrap;
         }
         
-        .status-pending { background: #ffc107; color: #000; }
-        .status-accepted { background: #28a745; color: white; }
-        .status-declined { background: #dc3545; color: white; }
-        .invite-sent { background: #17a2b8; color: white; }
-        .invite-not-sent { background: #6c757d; color: white; }
-        
-        .stats-row {
-            display: flex;
-            gap: 1rem;
-            margin: 1rem 0;
-            flex-wrap: wrap;
+        .guest-table tr:hover {
+            background: #f7fafc;
         }
         
-        .stat-card {
-            flex: 1;
-            background: rgba(212, 175, 55, 0.1);
-            border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            min-width: 120px;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: bold;
-            color: #7b1e3b;
         }
         
-        .stat-label {
-            color: #d46a7c;
-            font-size: 0.9rem;
+        .status-sent {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-pending {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .status-accepted {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        .status-declined {
+            background: #fbb6ce;
+            color: #702459;
+        }
+        
+        .message {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
         }
         
         .bulk-actions {
-            background: rgba(212, 175, 55, 0.05);
-            border: 2px dashed #d4af37;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            text-align: center;
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
         }
         
-        .message-log {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            margin: 1rem 0;
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 0.85rem;
-        }
-        
-        .navigation {
-            background: rgba(123, 30, 59, 0.05);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        
-        .nav-links a {
-            display: inline-block;
-            margin: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: #7b1e3b;
-            color: white;
-            text-decoration: none;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-links a:hover {
-            background: #d46a7c;
-            transform: translateY(-1px);
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-            
-            .stats-row {
-                flex-direction: column;
-            }
-            
-            .guests-table {
-                font-size: 0.85rem;
-            }
-            
-            .guests-table th,
-            .guests-table td {
-                padding: 0.5rem;
-            }
-            
-            .button {
-                font-size: 0.9rem;
-                padding: 0.6rem 1rem;
-                margin: 0.25rem;
-            }
-        }
-        
-        /* Loading animations */
         .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-        
-        .loading::after {
-            content: "...";
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        
-        @keyframes dots {
-            0%, 20% { color: transparent; text-shadow: .25em 0 0 transparent, .5em 0 0 transparent; }
-            40% { color: currentColor; text-shadow: .25em 0 0 transparent, .5em 0 0 transparent; }
-            60% { color: currentColor; text-shadow: .25em 0 0 currentColor, .5em 0 0 transparent; }
-            80%, 100% { color: currentColor; text-shadow: .25em 0 0 currentColor, .5em 0 0 currentColor; }
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <div class="navigation">
-        <h3>🚀 Wedding Management System</h3>
-        <div class="nav-links">
-            <a href="/">🏠 Main Site</a>
-            <a href="/main.html">💍 Wedding Page</a>
-            <a href="/admin">⚙️ Admin Panel</a>
-            <a href="#" onclick="exportGuestList()">📊 Export CSV</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <h1>💍 Wedding Admin Panel 🚀</h1>
-        
-        <!-- Provider Status -->
-        <div id="providerStatus" class="provider-status">
-            <h3>📡 Checking WhatsApp provider...</h3>
-        </div>
-        
-        <!-- Stats Dashboard -->
-        <div class="stats-row" id="statsRow">
-            <div class="stat-card">
-                <div class="stat-number" id="totalGuests">0</div>
-                <div class="stat-label">Total Guests</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="invitesSent">0</div>
-                <div class="stat-label">Invites Sent</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="rsvpAccepted">0</div>
-                <div class="stat-label">RSVP Yes</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="rsvpDeclined">0</div>
-                <div class="stat-label">RSVP No</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="rsvpPending">0</div>
-                <div class="stat-label">Pending</div>
-            </div>
-        </div>
-        
-        <!-- Bulk Actions -->
-        <div class="bulk-actions">
-            <h3>🚀 Bulk Actions</h3>
-            <p>Send wedding invites to all guests who haven't received one yet!</p>
-            <button class="button bulk" onclick="sendAllInvites()">📱 Send All Pending Invites</button>
-            <button class="button" onclick="loadGuests()">🔄 Refresh Guest List</button>
-            <button class="button warning" onclick="testWhatsApp()">🧪 Test WhatsApp</button>
-        </div>
+    <div class="container">
+        <h1>🌟 Wedding Admin Panel 💍</h1>
         
         <!-- Add Guest Form -->
-        <h2>➕ Add New Guest</h2>
-        <form id="guestForm" onsubmit="addGuest(event)">
-            <div class="form-group">
-                <label for="guestName">Guest Name:</label>
-                <input type="text" id="guestName" required placeholder="Enter guest name">
+        <div class="form-section">
+            <h2>Add New Guest</h2>
+            <form id="addGuestForm">
+                <div class="form-row">
+                    <input type="text" id="guestName" placeholder="Guest Name" required>
+                    <input type="tel" id="guestPhone" placeholder="Phone Number (e.g., 0646191448)" required>
+                    <button type="submit" class="btn-primary">Add Guest</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="form-section">
+            <h2>Bulk Actions</h2>
+            <div class="bulk-actions">
+                <button onclick="deleteTestGuests()" class="btn-danger">Delete Test Guests</button>
+                <button onclick="deleteAllGuests()" class="btn-danger" style="background: #c53030;">⚠️ Delete ALL Guests</button>
+                <button onclick="sendAllInvites()" class="btn-primary">Send All Pending Invites</button>
             </div>
-            <div class="form-group">
-                <label for="guestPhone">Phone Number (with country code):</label>
-                <input type="tel" id="guestPhone" required placeholder="+27641234567">
-            </div>
-            <button type="submit" class="button">➕ Add Guest</button>
-        </form>
-        
-        <!-- Guests List -->
-        <h2>📋 Guest List</h2>
-        <div style="overflow-x: auto;">
-            <table class="guests-table" id="guestsTable">
-                <thead>
-                    <tr>
-                        <th style="width: 20%;">Name</th>
-                        <th style="width: 18%;">Phone</th>
-                        <th style="width: 12%;">Password</th>
-                        <th style="width: 15%;">Invite Status</th>
-                        <th style="width: 15%;">RSVP</th>
-                        <th style="width: 20%;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="guestsTableBody">
-                    <tr><td colspan="6">Loading guests...</td></tr>
-                </tbody>
-            </table>
         </div>
         
-        <!-- Message Log -->
-        <h2>📞 Message Log</h2>
-        <div id="messageLog" class="message-log">
-            Ready to send invites...<br>
+        <!-- Messages -->
+        <div id="message"></div>
+        <div id="loading" class="loading">Processing...</div>
+        
+        <!-- Guests List -->
+        <div class="guest-section">
+            <h2>Guest List</h2>
+            <table class="guest-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Password</th>
+                        <th>Invite Status</th>
+                        <th>RSVP Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="guestsList">
+                    <tr><td colspan="6" style="text-align: center; color: #666;">Loading guests...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         let guests = [];
-        let providerInfo = {};
 
-        // Check provider status on load
-        async function checkProviderStatus() {
-            try {
-                const response = await fetch('/api/test_whatsapp');
-                const result = await response.json();
-                const statusDiv = document.getElementById('providerStatus');
-                
-                if (result.error) {
-                    statusDiv.className = 'provider-status error';
-                    statusDiv.innerHTML = `
-                        <h3>❌ ${result.error}</h3>
-                        <p>Please configure your WhatsApp provider in the .env file</p>
-                        <p><small>You can still add guests - just can't send messages yet.</small></p>
-                    `;
-                } else {
-                    statusDiv.className = 'provider-status success';
-                    providerInfo = result;
-                    statusDiv.innerHTML = `
-                        <h3>✅ ${result.status}</h3>
-                        <p><strong>Provider:</strong> ${result.provider}</p>
-                        <p><strong>Pricing:</strong> ${result.pricing || result.free_messages || 'N/A'}</p>
-                        <p><strong>API Key:</strong> ${result.api_key || 'Not set'}</p>
-                    `;
-                }
-            } catch (error) {
-                console.error('Provider check failed:', error);
-                const statusDiv = document.getElementById('providerStatus');
-                statusDiv.className = 'provider-status error';
-                statusDiv.innerHTML = `
-                    <h3>❌ Connection Error</h3>
-                    <p>Could not check provider status. Backend may be down.</p>
-                    <p><small>You can still add guests manually.</small></p>
-                `;
-            }
-        }
+        // Load guests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGuests();
+        });
 
-        // Load guests from API
-        async function loadGuests() {
-            try {
-                logMessage('📋 Loading guests...');
-                const response = await fetch('/api/guests');
-                guests = await response.json();
-                updateStats();
-                updateGuestsTable();
-                logMessage(`📋 Loaded ${guests.length} guests`);
-            } catch (error) {
-                logMessage(`❌ Failed to load guests: ${error.message}`);
-                console.error('Failed to load guests:', error);
-                // Show empty state
-                const tbody = document.getElementById('guestsTableBody');
-                tbody.innerHTML = '<tr><td colspan="6">❌ Failed to load guests. Check if backend is running.</td></tr>';
-            }
-        }
-
-        // Update statistics
-        function updateStats() {
-            document.getElementById('totalGuests').textContent = guests.length;
-            document.getElementById('invitesSent').textContent = guests.filter(g => g.invite_sent).length;
-            document.getElementById('rsvpAccepted').textContent = guests.filter(g => g.rsvp_status === 'accepted').length;
-            document.getElementById('rsvpDeclined').textContent = guests.filter(g => g.rsvp_status === 'declined').length;
-            document.getElementById('rsvpPending').textContent = guests.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
-        }
-
-        // Update guests table
-        function updateGuestsTable() {
-            const tbody = document.getElementById('guestsTableBody');
-            if (guests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No guests added yet. Add your first guest above! 🎉</td></tr>';
+        // Add guest form handler
+        document.getElementById('addGuestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('guestName').value.trim();
+            const phone = document.getElementById('guestPhone').value.trim();
+            
+            if (!name || !phone) {
+                showMessage('Please fill in all fields', 'error');
                 return;
             }
+            
+            showLoading(true);
+            
+            fetch('/api/add_guest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: name, phone: phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                } else {
+                    showMessage(data.message, 'success');
+                    document.getElementById('addGuestForm').reset();
+                    loadGuests(); // Refresh the list
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showMessage('Error adding guest: ' + error.message, 'error');
+            });
+        });
 
+        // Load guests from API
+        function loadGuests() {
+            fetch('/api/guests')
+                .then(response => response.json())
+                .then(data => {
+                    guests = data;
+                    renderGuests();
+                })
+                .catch(error => {
+                    showMessage('Error loading guests: ' + error.message, 'error');
+                });
+        }
+
+        // Render guests table
+        function renderGuests() {
+            const tbody = document.getElementById('guestsList');
+            
+            if (guests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No guests added yet</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = guests.map(guest => `
                 <tr>
-                    <td title="${guest.name}">${guest.name}</td>
-                    <td title="${guest.phone}">${guest.phone}</td>
-                    <td><code>${guest.password || 'N/A'}</code></td>
+                    <td>${guest.name}</td>
+                    <td>${guest.phone}</td>
+                    <td><code>${guest.password}</code></td>
                     <td>
-                        <span class="status-badge ${guest.invite_sent ? 'invite-sent' : 'invite-not-sent'}">
+                        <span class="status ${guest.invite_sent ? 'status-sent' : 'status-pending'}">
                             ${guest.invite_sent ? '✅ Sent' : '⏳ Pending'}
                         </span>
                     </td>
                     <td>
-                        <span class="status-badge status-${guest.rsvp_status || 'pending'}">
-                            ${guest.rsvp_status === 'accepted' ? '✅ Yes' : 
-                              guest.rsvp_status === 'declined' ? '❌ No' : '⏳ Pending'}
+                        <span class="status ${
+                            guest.rsvp_status === 'accepted' ? 'status-accepted' : 
+                            guest.rsvp_status === 'declined' ? 'status-declined' : 'status-pending'
+                        }">
+                            ${guest.rsvp_status || '⏳ Pending'}
                         </span>
                     </td>
                     <td>
-                        <button class="button ${guest.invite_sent ? 'warning' : 'success'}" 
-                                onclick="sendInvite(${guest.id})"
-                                style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
-                            ${guest.invite_sent ? '🔄 Resend' : '📱 Send'}
+                        <button 
+                            onclick="sendInvite(${guest.id})" 
+                            class="btn-send" 
+                            ${guest.invite_sent ? 'disabled' : ''}
+                            title="${guest.invite_sent ? 'Already sent' : 'Send invitation'}"
+                        >
+                            ${guest.invite_sent ? '📨 Sent' : '📤 Send'}
+                        </button>
+                        <button 
+                            onclick="deleteGuest(${guest.id}, '${guest.name}')" 
+                            class="btn-delete"
+                            title="Delete guest"
+                        >
+                            🗑️ Delete
                         </button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // Add new guest
-        async function addGuest(event) {
-            event.preventDefault();
+        // Send invite to specific guest
+        function sendInvite(guestId) {
+            showLoading(true);
             
-            const name = document.getElementById('guestName').value.trim();
-            const phone = document.getElementById('guestPhone').value.trim();
-            
-            if (!name || !phone) {
-                alert('Please enter both name and phone number');
+            fetch(`/api/send_invite/${guestId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                } else {
+                    showMessage(data.message, 'success');
+                    loadGuests(); // Refresh to show updated status
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showMessage('Error sending invite: ' + error.message, 'error');
+            });
+        }
+
+        // Delete specific guest
+        function deleteGuest(guestId, guestName) {
+            if (!confirm(`Are you sure you want to delete "${guestName}"?`)) {
                 return;
             }
             
-            logMessage(`➕ Adding guest: ${name} - ${phone}...`);
+            showLoading(true);
             
-            try {
-                const response = await fetch('/api/add_guest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    logMessage(`✅ Added guest: ${name} - Password: ${result.password}`);
-                    document.getElementById('guestForm').reset();
-                    await loadGuests();
-                    alert(`✅ Guest added successfully!\nName: ${name}\nPassword: ${result.password}`);
+            fetch(`/api/delete_guest/${guestId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    showMessage(data.error, 'error');
                 } else {
-                    logMessage(`❌ Failed to add guest: ${result.error}`);
-                    alert(`Error: ${result.error}`);
+                    showMessage(data.message, 'success');
+                    loadGuests(); // Refresh the list
                 }
-            } catch (error) {
-                logMessage(`❌ Error adding guest: ${error.message}`);
-                console.error('Failed to add guest:', error);
-                alert(`Connection error: ${error.message}\nCheck if the backend is running.`);
-            }
+            })
+            .catch(error => {
+                showLoading(false);
+                showMessage('Error deleting guest: ' + error.message, 'error');
+            });
         }
 
-        // Send invite to specific guest
-        async function sendInvite(guestId) {
-            const guest = guests.find(g => g.id === guestId);
-            if (!guest) return;
-            
-            logMessage(`📱 Sending invite to ${guest.name}...`);
-            
-            try {
-                const response = await fetch(`/api/send_invite/${guestId}`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    logMessage(`✅ ${result.message}`);
-                    await loadGuests();
-                    alert(`✅ Invite sent to ${guest.name}!`);
-                } else {
-                    logMessage(`❌ ${result.error}`);
-                    alert(`Error: ${result.error}`);
-                }
-            } catch (error) {
-                logMessage(`❌ Failed to send invite: ${error.message}`);
-                console.error('Failed to send invite:', error);
-                alert(`Connection error: ${error.message}`);
+        // Delete test guests
+        function deleteTestGuests() {
+            if (!confirm('Delete all test guests? (Names containing: test, demo, example, dummy, sample, fake)')) {
+                return;
             }
+            
+            showLoading(true);
+            
+            fetch('/api/delete_test_guests', {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                showMessage(data.message, 'success');
+                if (data.deleted_guests && data.deleted_guests.length > 0) {
+                    console.log('Deleted guests:', data.deleted_guests);
+                }
+                loadGuests(); // Refresh the list
+            })
+            .catch(error => {
+                showLoading(false);
+                showMessage('Error deleting test guests: ' + error.message, 'error');
+            });
+        }
+
+        // Delete ALL guests
+        function deleteAllGuests() {
+            if (!confirm('⚠️ DELETE ALL GUESTS? This cannot be undone!')) {
+                return;
+            }
+            
+            if (!confirm('Are you absolutely sure? This will delete EVERYONE in the database!')) {
+                return;
+            }
+            
+            showLoading(true);
+            
+            fetch('/api/delete_all_guests', {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                showMessage(data.message, 'success');
+                loadGuests(); // Refresh the list
+            })
+            .catch(error => {
+                showLoading(false);
+                showMessage('Error deleting all guests: ' + error.message, 'error');
+            });
         }
 
         // Send all pending invites
-        async function sendAllInvites() {
+        function sendAllInvites() {
             const pendingGuests = guests.filter(g => !g.invite_sent);
             
             if (pendingGuests.length === 0) {
-                alert('🎉 All invites have already been sent!');
+                showMessage('No pending invites to send', 'error');
                 return;
             }
             
@@ -541,95 +476,52 @@
                 return;
             }
             
-            logMessage(`🚀 Sending bulk invites to ${pendingGuests.length} guests...`);
+            showLoading(true);
+            let completed = 0;
+            let errors = 0;
             
-            try {
-                const response = await fetch('/api/send_all_invites', {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    logMessage(`✅ ${result.message}`);
-                    if (result.results) {
-                        result.results.sent.forEach(name => logMessage(`  ✅ Sent to ${name}`));
-                        result.results.failed.forEach(name => logMessage(`  ❌ Failed: ${name}`));
-                    }
-                    await loadGuests();
-                    alert(`Bulk send complete!\nSent: ${result.results?.sent?.length || 0}\nFailed: ${result.results?.failed?.length || 0}`);
-                } else {
-                    logMessage(`❌ Bulk send failed: ${result.error}`);
-                    alert(`Error: ${result.error}`);
-                }
-            } catch (error) {
-                logMessage(`❌ Bulk send error: ${error.message}`);
-                console.error('Bulk send failed:', error);
-                alert(`Connection error: ${error.message}`);
-            }
+            // Send invites one by one to avoid rate limits
+            pendingGuests.forEach((guest, index) => {
+                setTimeout(() => {
+                    fetch(`/api/send_invite/${guest.id}`, { method: 'POST' })
+                        .then(response => response.json())
+                        .then(data => {
+                            completed++;
+                            if (data.error) errors++;
+                            
+                            if (completed === pendingGuests.length) {
+                                showLoading(false);
+                                showMessage(`Sent ${completed - errors} invites, ${errors} errors`, 
+                                          errors > 0 ? 'error' : 'success');
+                                loadGuests();
+                            }
+                        })
+                        .catch(() => {
+                            completed++;
+                            errors++;
+                            
+                            if (completed === pendingGuests.length) {
+                                showLoading(false);
+                                showMessage(`Sent ${completed - errors} invites, ${errors} errors`, 'error');
+                                loadGuests();
+                            }
+                        });
+                }, index * 2000); // 2 second delay between sends
+            });
         }
 
-        // Test WhatsApp connection
-        async function testWhatsApp() {
-            logMessage('🧪 Testing WhatsApp configuration...');
-            await checkProviderStatus();
+        // Utility functions
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
         }
 
-        // Export guest list as CSV
-        function exportGuestList() {
-            if (guests.length === 0) {
-                alert('No guests to export!');
-                return;
-            }
-            
-            const headers = ['Name', 'Phone', 'Password', 'Invite Sent', 'RSVP Status'];
-            const csvData = guests.map(g => [
-                g.name,
-                g.phone,
-                g.password || '',
-                g.invite_sent ? 'Yes' : 'No',
-                g.rsvp_status || 'Pending'
-            ]);
-            
-            const csvContent = [headers, ...csvData]
-                .map(row => row.map(field => `"${field}"`).join(','))
-                .join('\n');
-            
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `wedding_guests_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            logMessage(`📊 Exported ${guests.length} guests to CSV`);
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
-
-        // Log message to console
-        function logMessage(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const logDiv = document.getElementById('messageLog');
-            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
-            logDiv.scrollTop = logDiv.scrollHeight;
-            console.log(`[Admin] ${message}`);
-        }
-
-        // Initialize page
-        window.addEventListener('load', async () => {
-            logMessage('🚀 Wedding Admin Panel loaded');
-            await checkProviderStatus();
-            await loadGuests();
-        });
-
-        // Auto-refresh guests every 30 seconds
-        setInterval(async () => {
-            if (document.visibilityState === 'visible') {
-                await loadGuests();
-            }
-        }, 30000);
     </script>
 </body>
 </html>
