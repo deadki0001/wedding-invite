@@ -296,16 +296,21 @@ def send_invite(guest_id):
         session.close()
         return jsonify({"error": "Guest not found"}), 404
 
-    logger.info(f"📧 Sending invite to {guest.name} ({guest.phone}) via {WHATSAPP_PROVIDER}")
+    # Store guest details before potential session closure
+    guest_name = guest.name
+    guest_phone = guest.phone
+    guest_password = guest.password
+    
+    logger.info(f"📧 Sending invite to {guest_name} ({guest_phone}) via {WHATSAPP_PROVIDER}")
 
     message = f"""🌟 You're invited to the best wedding this galaxy has ever experienced! 🚀
 
-Hi {guest.name}! 💍
+Hi {guest_name}! 💍
 
 You're cordially invited to join us for our special day.
 
 📱 RSVP here: {LOGIN_LINK}
-🔐 Your password: {guest.password}
+🔐 Your password: {guest_password}
 
 📅 Date: Saturday, August 12th, 2025
 📍 Venue: The Spectacular Galaxy Gardens
@@ -317,7 +322,7 @@ Love,
 The Happy Couple 💕"""
 
     try:
-        success = send_whatsapp_message(guest.phone, message)
+        success = send_whatsapp_message(guest_phone, message)
     except Exception as e:
         logger.error(f"❌ Exception while sending invite: {e}", exc_info=True)
         session.close()
@@ -327,11 +332,11 @@ The Happy Couple 💕"""
         guest.invite_sent = True
         session.commit()
         session.close()
-        logger.info(f"✅ Invitation sent to {guest.name}")
-        return jsonify({"message": f"Invitation sent to {guest.name} via {WHATSAPP_PROVIDER}"})
+        logger.info(f"✅ Invitation sent to {guest_name}")
+        return jsonify({"message": f"Invitation sent to {guest_name} via {WHATSAPP_PROVIDER}"})
     else:
         session.close()
-        logger.error(f"❌ Failed to send invitation to {guest.name}")
+        logger.error(f"❌ Failed to send invitation to {guest_name}")
         return jsonify({"error": f"Failed to send WhatsApp message via {WHATSAPP_PROVIDER}"}), 500
 
 @app.route("/api/send_invite_with_delay/<int:guest_id>", methods=["POST"])
@@ -344,16 +349,21 @@ def send_invite_with_delay(guest_id):
         session.close()
         return jsonify({"error": "Guest not found"}), 404
 
-    logger.info(f"📧 Sending invite to {guest.name} ({guest.phone}) via {WHATSAPP_PROVIDER}")
+    # Store guest details before potential session closure
+    guest_name = guest.name
+    guest_phone = guest.phone
+    guest_password = guest.password
+    
+    logger.info(f"📧 Sending invite to {guest_name} ({guest_phone}) via {WHATSAPP_PROVIDER}")
 
     message = f"""🌟 You're invited to the best wedding this galaxy has ever experienced! 🚀
 
-Hi {guest.name}! 💍
+Hi {guest_name}! 💍
 
 You're cordially invited to join us for our special day.
 
 📱 RSVP here: {LOGIN_LINK}
-🔐 Your password: {guest.password}
+🔐 Your password: {guest_password}
 
 📅 Date: Saturday, August 12th, 2025
 📍 Venue: The Spectacular Galaxy Gardens
@@ -369,14 +379,14 @@ The Happy Couple 💕"""
     
     while retry_count < max_retries:
         try:
-            success = send_whatsapp_message(guest.phone, message)
+            success = send_whatsapp_message(guest_phone, message)
             
             if success:
                 guest.invite_sent = True
                 session.commit()
                 session.close()
-                logger.info(f"✅ Invitation sent to {guest.name}")
-                return jsonify({"message": f"Invitation sent to {guest.name} via {WHATSAPP_PROVIDER}"})
+                logger.info(f"✅ Invitation sent to {guest_name}")
+                return jsonify({"message": f"Invitation sent to {guest_name} via {WHATSAPP_PROVIDER}"})
             else:
                 retry_count += 1
                 if retry_count < max_retries:
