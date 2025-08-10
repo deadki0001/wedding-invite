@@ -896,4 +896,10 @@ if __name__ == "__main__":
         else:
             logger.warning("⚠️ Twilio configuration incomplete")
 
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Production settings
+    port = int(os.getenv('PORT', 5000))
+    host = os.getenv('HOST', '0.0.0.0')
+    debug = os.getenv('FLASK_ENV') != 'production'
+    
+    logger.info(f"🌐 Starting server on {host}:{port} (debug={debug})")
+    app.run(debug=debug, host=host, port=port)

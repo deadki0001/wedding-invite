@@ -94,133 +94,101 @@
             padding: 1.5rem;
             margin: 1rem 0;
         }
+
+        .redirect-notice {
+            background: rgba(220, 53, 69, 0.1);
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>🚀 Wedding Invitation Setup Guide</h1>
+        <h1>🚀 Wedding Invitation Admin Panel</h1>
+        
+        <div class="redirect-notice">
+            <h3>🔄 Redirecting to Admin Panel...</h3>
+            <p>If you're not automatically redirected, click the button below:</p>
+            <a href="/admin" class="button">🔗 Go to Admin Panel</a>
+        </div>
         
         <div class="warning">
-            <strong>⚠️ Issue Detected:</strong> No test guest exists in database. The login is failing because there's no guest with phone <code>+27641234567</code> and password <code>ADMIN123</code>.
+            <strong>⚠️ Production Setup:</strong> This appears to be your production environment. The admin panel is available at <code>/admin</code> (without .html extension).
         </div>
         
-        <h2>🛠️ Quick Fix Options</h2>
+        <h2>🛠️ Production Access</h2>
         
         <div class="quick-fix">
-            <h3>Option 1: Use Admin Panel (Recommended)</h3>
+            <h3>Correct URLs for Production</h3>
             <div class="step">
-                <strong>Step 1:</strong> Go to the admin panel
-                <div class="code-block">http://localhost:5000/admin</div>
+                <strong>Admin Panel:</strong>
+                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/admin</div>
             </div>
             <div class="step">
-                <strong>Step 2:</strong> Add a test guest:
-                <ul>
-                    <li><strong>Name:</strong> Test User</li>
-                    <li><strong>Phone:</strong> +27641234567</li>
-                </ul>
+                <strong>Main Site:</strong>
+                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/</div>
             </div>
             <div class="step">
-                <strong>Step 3:</strong> The system will generate a password automatically. Use that password to login!
+                <strong>Test API:</strong>
+                <div class="code-block">https://wedding-invitation.adkinsfamily.co.za/api/test_whatsapp</div>
             </div>
-            <a href="http://localhost:5000/admin" class="button">🔗 Open Admin Panel</a>
+            <a href="/admin" class="button">🔗 Access Admin Panel</a>
         </div>
         
-        <div class="quick-fix">
-            <h3>Option 2: Direct Database Insert</h3>
-            <div class="step">
-                <strong>Run this Python script:</strong>
-                <div class="code-block">
-python3 -c "
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Guest, Base
-
-engine = create_engine('sqlite:///database.db')
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Check if guest exists
-existing = session.query(Guest).filter_by(phone='+27641234567').first()
-if existing:
-    print(f'Guest exists: {existing.name} - Password: {existing.password}')
-else:
-    # Create test guest
-    guest = Guest(name='Test User', phone='+27641234567', password='ADMIN123')
-    session.add(guest)
-    session.commit()
-    print('Test guest created: +27641234567 / ADMIN123')
-
-session.close()
-"
-                </div>
-            </div>
-        </div>
-        
-        <h2>🔍 Debugging Steps</h2>
+        <h2>🔍 Troubleshooting</h2>
         
         <div class="step">
-            <strong>Check current database:</strong>
-            <div class="code-block">
-python3 -c "
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Guest
-
-engine = create_engine('sqlite:///database.db')
-Session = sessionmaker(bind=engine)
-session = Session()
-guests = session.query(Guest).all()
-print(f'Total guests: {len(guests)}')
-for g in guests:
-    print(f'- {g.name} | {g.phone} | {g.password}')
-session.close()
-"
-            </div>
-        </div>
-        
-        <h2>✅ Testing the Fix</h2>
-        
-        <div class="success">
-            <strong>After adding the guest:</strong>
-            <ol>
-                <li>Go to <code>http://localhost:5000/</code></li>
-                <li>Click the test credentials box to auto-fill</li>
-                <li>Or manually enter:
-                    <ul>
-                        <li>Phone: <code>+27641234567</code></li>
-                        <li>Password: <code>[generated password or ADMIN123]</code></li>
-                    </ul>
-                </li>
-                <li>Click Login</li>
-            </ol>
-        </div>
-        
-        <h2>🚨 Alternative Testing</h2>
-        
-        <div class="step">
-            The login page has built-in bypasses for testing:
+            <strong>If you see localhost references:</strong>
             <ul>
-                <li><strong>Direct link:</strong> <a href="http://localhost:5000/main.html">Skip to main page</a></li>
-                <li><strong>URL parameter:</strong> <code>http://localhost:5000/?test=true</code></li>
-                <li><strong>Keyboard shortcut:</strong> Press <code>Ctrl+Shift+T</code> on login page</li>
+                <li>Update your environment variables</li>
+                <li>Restart your Flask application</li>
+                <li>Clear browser cache</li>
             </ul>
         </div>
         
-        <div class="card">
-            <h2>🎉 What Should Happen Next</h2>
-            <p>Once you have a guest in the database:</p>
-            <ol>
-                <li>Login will succeed ✅</li>
-                <li>You'll be redirected to the beautiful wedding invitation page 💍</li>
-                <li>You can test RSVP functionality 📝</li>
-                <li>Admin panel will show the guest and allow sending WhatsApp invites 📱</li>
-            </ol>
+        <div class="step">
+            <strong>Environment Variables Check:</strong>
+            <div class="code-block">
+# In your .env file:
+FLASK_ENV=production
+HOST=0.0.0.0
+PORT=5000
+WEDDING_LOGIN_URL=https://wedding-invitation.adkinsfamily.co.za/
+            </div>
         </div>
         
-        <div class="warning">
-            <strong>💡 Pro Tip:</strong> The backend is working perfectly! It's just missing test data. The Twilio integration is configured and ready to send WhatsApp messages once you have guests in the database.
+        <h2>✅ Next Steps</h2>
+        
+        <div class="success">
+            <ol>
+                <li>Click the admin panel link above</li>
+                <li>Check your WasenderAPI status</li>
+                <li>Add your wedding guests</li>
+                <li>Send beautiful wedding invitations! 🎉</li>
+            </ol>
         </div>
     </div>
+
+    <script>
+        // Auto-redirect to the correct admin panel after 3 seconds
+        setTimeout(() => {
+            window.location.href = '/admin';
+        }, 3000);
+        
+        // Show countdown
+        let countdown = 3;
+        const countdownElement = document.querySelector('.redirect-notice h3');
+        const interval = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = `🔄 Redirecting to Admin Panel in ${countdown} seconds...`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                countdownElement.textContent = '🔄 Redirecting now...';
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
