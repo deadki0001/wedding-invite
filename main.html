@@ -27,35 +27,46 @@
             overflow-x: hidden;
         }
 
-        /* Header Carousel */
+        /* Enhanced Carousel - Shows 3 photos at a time */
         .carousel-container {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 400px;
             overflow: hidden;
             border-radius: 0 0 20px 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
         }
 
         .carousel {
             display: flex;
-            width: 500%;
             height: 100%;
-            animation: slideTop 15s infinite;
+            transition: transform 0.5s ease-in-out;
         }
 
-        .carousel.bottom {
-            animation: slideBottom 18s infinite reverse;
+        .carousel-slide {
+            display: flex;
+            min-width: 100%;
+            height: 100%;
+            gap: 10px;
+            padding: 10px;
         }
 
         .carousel-item {
-            width: 20%;
+            flex: 1;
             height: 100%;
-            background-size: contain;
+            background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            border-radius: 15px;
             position: relative;
-            background-color: var(--soft-pink);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .carousel-item:hover {
+            transform: scale(1.02);
+            z-index: 2;
         }
 
         .carousel-item::after {
@@ -66,29 +77,71 @@
             right: 0;
             bottom: 0;
             background: rgba(123, 30, 59, 0.1);
+            border-radius: 15px;
+            transition: background 0.3s ease;
         }
 
-        @keyframes slideTop {
-            0%, 20% { transform: translateX(0); }
-            25%, 45% { transform: translateX(-20%); }
-            50%, 70% { transform: translateX(-40%); }
-            75%, 95% { transform: translateX(-60%); }
-            100% { transform: translateX(-80%); }
+        .carousel-item:hover::after {
+            background: rgba(212, 175, 55, 0.2);
         }
 
-        @keyframes slideBottom {
-            0%, 20% { transform: translateX(-80%); }
-            25%, 45% { transform: translateX(-60%); }
-            50%, 70% { transform: translateX(-40%); }
-            75%, 95% { transform: translateX(-20%); }
-            100% { transform: translateX(0); }
+        /* Navigation buttons */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .carousel-nav:hover {
+            background: var(--gold);
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-nav.prev {
+            left: 20px;
+        }
+
+        .carousel-nav.next {
+            right: 20px;
+        }
+
+        /* Dots indicator */
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(123, 30, 59, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--gold);
+            transform: scale(1.2);
         }
 
         /* Main Content */
         .main-content {
             padding: 2rem;
             text-align: center;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -194,17 +247,6 @@
             color: var(--rose);
         }
 
-        /* Bottom Carousel - Fixed visibility */
-        .bottom-carousel {
-            margin-top: 3rem;
-            height: 250px;
-            border-radius: 20px 20px 0 0;
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-        }
-
         /* Floating Hearts */
         .heart {
             position: fixed;
@@ -261,11 +303,17 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             .carousel-container {
-                height: 200px;
+                height: 300px;
             }
             
-            .bottom-carousel {
-                height: 180px;
+            .carousel-slide {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .carousel-item {
+                flex: 1;
+                min-height: 90px;
             }
             
             .welcome-message h1 {
@@ -280,21 +328,48 @@
                 flex-direction: column;
                 align-items: center;
             }
+
+            .carousel-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+
+        /* Loading animation */
+        .carousel-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: var(--burgundy);
+            font-size: 1.2rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .carousel-loading::after {
+            content: '...';
+            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
 <body>
     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
 
-    <!-- Top Carousel -->
+    <!-- Enhanced Photo Carousel -->
     <div class="carousel-container">
-        <div class="carousel" id="topCarousel">
-            <div class="carousel-item" style="background-image: url('assets/wedding1.jpg')" data-fallback="💍 Wedding Photo 1"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding2.jpg')" data-fallback="💒 Wedding Photo 2"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding3.jpg')" data-fallback="🌹 Wedding Photo 3"></div>
-            <div class="carousel-item" style="background-image: url('assets/ring-hand.jpg')" data-fallback="💎 Ring Photo"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding1.jpg')" data-fallback="✨ Wedding Magic"></div>
+        <button class="carousel-nav prev" onclick="previousSlide()">‹</button>
+        <button class="carousel-nav next" onclick="nextSlide()">›</button>
+        
+        <div class="carousel" id="photoCarousel">
+            <div class="carousel-loading">Loading beautiful memories</div>
         </div>
+        
+        <div class="carousel-dots" id="carouselDots"></div>
     </div>
 
     <!-- Main Content -->
@@ -337,17 +412,6 @@
         </div>
     </div>
 
-    <!-- Bottom Carousel - Fixed structure -->
-    <div class="carousel-container bottom-carousel">
-        <div class="carousel bottom" id="bottomCarousel">
-            <div class="carousel-item" style="background-image: url('assets/ring-hand.jpg')" data-fallback="💕 Love Story 1"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding1.jpg')" data-fallback="💑 Couple Photo 1"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding2.jpg')" data-fallback="💑 Couple Photo 2"></div>
-            <div class="carousel-item" style="background-image: url('assets/wedding3.jpg')" data-fallback="💑 Couple Photo 3"></div>
-            <div class="carousel-item" style="background-image: url('assets/ring-hand.jpg')" data-fallback="💍 Forever Together"></div>
-        </div>
-    </div>
-
     <!-- Audio element for wedding music -->
     <audio id="weddingMusic" loop>
         <source src="assets/wedding-song.mp3" type="audio/mpeg">
@@ -356,6 +420,35 @@
 
     <script>
         let currentGuest = null;
+        let currentSlide = 0;
+        let totalSlides = 0;
+        let autoSlideInterval = null;
+        let allPhotos = [];
+
+        // All your photo files from the assets folder
+        const availablePhotos = [
+            'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
+            'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
+            'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
+            'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
+            'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg',
+            'IMG_0362.jpg', 'IMG_0382.jpg', 'IMG_0385.jpg', 'IMG_0386.jpg',
+            'IMG_0393.jpg', 'IMG_0394.jpg', 'IMG_0397.jpg', 'IMG_0400.jpg',
+            'IMG_0405.jpg', 'IMG_0407.jpg', 'IMG_0409.jpg', 'IMG_0416.jpg',
+            'IMG_0417.jpg', 'IMG_0418.jpg', 'IMG_0423.jpg', 'IMG_0424.jpg',
+            'IMG_0431.jpg', 'IMG_0436.jpg', 'IMG_0439.jpg', 'IMG_0440.jpg',
+            'IMG_0442.jpg', 'IMG_0446.jpg', 'IMG_0448.jpg', 'IMG_0451.jpg',
+            'IMG_0458.jpg', 'IMG_0467.jpg', 'IMG_0470.jpg', 'IMG_0471.jpg',
+            'IMG_0472.jpg', 'IMG_0473.jpg', 'IMG_0475.jpg', 'IMG_0478.jpg',
+            'IMG_0481.jpg', 'IMG_0483.jpg', 'IMG_0487.jpg', 'IMG_0489.jpg',
+            'IMG_0493.jpg', 'IMG_0502.jpg', 'IMG_0504.jpg', 'IMG_0505.jpg',
+            'IMG_0507.jpg', 'IMG_0508.jpg', 'IMG_0511.jpg', 'IMG_0515.jpg',
+            'IMG_0522.jpg', 'IMG_0548.jpg', 'IMG_0551.jpg', 'IMG_0552.jpg',
+            'IMG_0559.jpg', 'IMG_0560.jpg', 'IMG_0565.jpg', 'IMG_0566.jpg',
+            'IMG_0570.jpg', 'IMG_0572.jpg', 'IMG_0576.jpg', 'IMG_0579.jpg',
+            'IMG_0580.jpg', 'IMG_0583.jpg', 'IMG_0588.jpg', 'IMG_0589.jpg',
+            'IMG_0596.jpg', 'IMG_0606.jpg', 'IMG_0614.jpg', 'IMG_0616.jpg'
+        ];
 
         // Initialize page when loaded
         window.onload = function() {
@@ -372,26 +465,132 @@
             // Update RSVP status display
             updateRSVPStatus();
 
+            // Initialize carousel with all photos
+            initializeCarousel();
+
             // Play wedding music
             playWeddingMusic();
 
             // Start floating hearts animation
             startFloatingHearts();
-            
-            // Check for missing images and add fallbacks
-            setupImageFallbacks();
         };
 
-        function setupImageFallbacks() {
-            const carouselItems = document.querySelectorAll('.carousel-item');
-            carouselItems.forEach(item => {
-                const bgImage = window.getComputedStyle(item).backgroundImage;
-                if (bgImage === 'none' || bgImage === '') {
-                    const fallbackText = item.getAttribute('data-fallback') || '💍';
-                    item.classList.add('fallback');
-                    item.innerHTML = fallbackText;
-                }
+        function initializeCarousel() {
+            // Filter out audio files and keep only images
+            allPhotos = availablePhotos.filter(photo => 
+                photo.toLowerCase().endsWith('.jpg') || 
+                photo.toLowerCase().endsWith('.jpeg') || 
+                photo.toLowerCase().endsWith('.png')
+            );
+
+            // Shuffle photos for variety
+            allPhotos = shuffleArray(allPhotos);
+
+            // Group photos into slides of 3
+            const photoSlides = [];
+            for (let i = 0; i < allPhotos.length; i += 3) {
+                photoSlides.push(allPhotos.slice(i, i + 3));
+            }
+
+            totalSlides = photoSlides.length;
+            
+            // Build carousel HTML
+            const carousel = document.getElementById('photoCarousel');
+            carousel.innerHTML = '';
+
+            photoSlides.forEach((slidePhotos, slideIndex) => {
+                const slide = document.createElement('div');
+                slide.className = 'carousel-slide';
+                
+                slidePhotos.forEach((photo, photoIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    item.style.backgroundImage = `url('assets/${photo}')`;
+                    item.setAttribute('data-fallback', `💕 Photo ${slideIndex * 3 + photoIndex + 1}`);
+                    
+                    // Add error handling for missing images
+                    const img = new Image();
+                    img.onload = () => {
+                        // Image loaded successfully
+                    };
+                    img.onerror = () => {
+                        item.classList.add('fallback');
+                        item.innerHTML = item.getAttribute('data-fallback');
+                        item.style.backgroundImage = 'none';
+                    };
+                    img.src = `assets/${photo}`;
+                    
+                    slide.appendChild(item);
+                });
+                
+                carousel.appendChild(slide);
             });
+
+            // Create dots for navigation
+            createDots();
+
+            // Start auto-slide
+            startAutoSlide();
+        }
+
+        function createDots() {
+            const dotsContainer = document.getElementById('carouselDots');
+            dotsContainer.innerHTML = '';
+
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+        }
+
+        function previousSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const carousel = document.getElementById('photoCarousel');
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            // Update dots
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            // Reset auto-slide timer
+            restartAutoSlide();
+        }
+
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(nextSlide, 4000); // Change every 4 seconds
+        }
+
+        function restartAutoSlide() {
+            clearInterval(autoSlideInterval);
+            startAutoSlide();
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
         }
 
         function playWeddingMusic() {
@@ -554,6 +753,15 @@
             }
         `;
         document.head.appendChild(style);
+
+        // Pause auto-slide when user hovers over carousel
+        const carouselContainer = document.querySelector('.carousel-container');
+        carouselContainer.addEventListener('mouseenter', () => {
+            clearInterval(autoSlideInterval);
+        });
+        carouselContainer.addEventListener('mouseleave', () => {
+            startAutoSlide();
+        });
     </script>
 </body>
 </html>
