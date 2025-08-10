@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Our Wedding Celebration</title>
     <style>
         :root {
@@ -14,17 +14,15 @@
             --soft-pink: #fbeaea;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, var(--soft-pink), var(--blush));
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
         }
 
         /* Enhanced Carousel - Shows 3 photos at a time */
@@ -36,12 +34,14 @@
             border-radius: 0 0 20px 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
+            background: rgba(255,255,255,0.6);
         }
 
         .carousel {
             display: flex;
             height: 100%;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.6s cubic-bezier(.2,.8,.2,1);
+            will-change: transform;
         }
 
         .carousel-slide {
@@ -50,6 +50,7 @@
             height: 100%;
             gap: 10px;
             padding: 10px;
+            align-items: stretch;
         }
 
         .carousel-item {
@@ -60,29 +61,53 @@
             background-repeat: no-repeat;
             border-radius: 15px;
             position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+            transition: transform .3s ease, opacity .3s ease;
+            background-color: var(--soft-pink);
+            overflow: hidden;
         }
 
-        .carousel-item:hover {
-            transform: scale(1.02);
+        .carousel-item.loading {
+            opacity: 0.85;
+            background: linear-gradient(135deg, var(--blush), var(--rose));
+            animation: shimmer 1.8s infinite linear;
+        }
+
+        .carousel-item.loading::before {
+            content: '📸';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            font-size: 1.8rem;
             z-index: 2;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .carousel-item.loaded { opacity: 1; }
+
+        .carousel-item.error {
+            background: linear-gradient(135deg, var(--rose), var(--burgundy));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
         }
 
         .carousel-item::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(123, 30, 59, 0.1);
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.08) 100%);
             border-radius: 15px;
-            transition: background 0.3s ease;
-        }
-
-        .carousel-item:hover::after {
-            background: rgba(212, 175, 55, 0.2);
+            pointer-events: none;
         }
 
         /* Navigation buttons */
@@ -90,51 +115,68 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255,255,255,0.9);
             border: none;
             border-radius: 50%;
             width: 50px;
             height: 50px;
             font-size: 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
         }
 
-        .carousel-nav:hover {
-            background: var(--gold);
-            color: white;
-            transform: translateY(-50%) scale(1.1);
-        }
+        .carousel-nav:hover { background: var(--gold); color: white; transform: translateY(-50%) scale(1.06); }
 
-        .carousel-nav.prev {
-            left: 20px;
-        }
+        .carousel-nav.prev { left: 16px; }
+        .carousel-nav.next { right: 16px; }
 
-        .carousel-nav.next {
-            right: 20px;
-        }
-
-        /* Dots indicator */
         .carousel-dots {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 12px;
         }
 
         .dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: rgba(123, 30, 59, 0.3);
+            background: rgba(123, 30, 59, 0.28);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s ease, background 0.2s ease;
         }
 
-        .dot.active {
-            background: var(--gold);
-            transform: scale(1.2);
+        .dot.active { background: var(--gold); transform: scale(1.2); }
+
+        /* Loading progress bar */
+        .loading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold), var(--rose));
+            z-index: 9999;
+            transition: width 0.25s linear;
+        }
+
+        /* Performance stats (debug) */
+        .perf-stats {
+            position: fixed;
+            bottom: 18px;
+            left: 18px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            z-index: 1000;
+            display: none;
         }
 
         /* Main Content */
@@ -146,230 +188,89 @@
         }
 
         .welcome-message {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.92);
             border-radius: 20px;
             padding: 2rem;
             margin: 2rem 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            backdrop-filter: blur(6px);
         }
 
         .welcome-message h1 {
             color: var(--burgundy);
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-size: 2.4rem;
+            margin-bottom: 0.6rem;
         }
 
-        .welcome-message p {
-            color: var(--rose);
-            font-size: 1.2rem;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
+        .welcome-message p { color: var(--rose); font-size: 1.1rem; line-height: 1.6; margin-bottom: .7rem; }
 
-        .guest-name {
-            color: var(--gold);
-            font-weight: bold;
-            font-size: 1.4rem;
-        }
+        .guest-name { color: var(--gold); font-weight: 700; font-size: 1.15rem; }
 
         /* RSVP Section */
         .rsvp-section {
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
-        }
-
-        .rsvp-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 1rem;
-        }
-
-        .rsvp-btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            min-width: 120px;
-        }
-
-        .rsvp-btn.accept {
-            background: var(--gold);
-            color: white;
-        }
-
-        .rsvp-btn.decline {
-            background: var(--rose);
-            color: white;
-        }
-
-        .rsvp-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .rsvp-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Wedding Details */
-        .wedding-details {
             background: rgba(255, 255, 255, 0.9);
             border-radius: 15px;
             padding: 1.5rem;
             margin: 2rem 0;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.06);
         }
 
-        .detail-item {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: rgba(212, 175, 55, 0.1);
-            border-radius: 10px;
-            border-left: 4px solid var(--gold);
-        }
+        .rsvp-buttons { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1rem; }
 
-        .detail-item h3 {
-            color: var(--burgundy);
-            margin-bottom: 0.5rem;
-        }
+        .rsvp-btn { padding:.8rem 1.5rem; border:none; border-radius:25px; font-size:1rem; cursor:pointer; font-weight:700; min-width:120px; }
+        .rsvp-btn.accept { background:var(--gold); color:white; }
+        .rsvp-btn.decline { background:var(--rose); color:white; }
 
-        .detail-item p {
-            color: var(--rose);
-        }
+        .rsvp-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+
+        /* Wedding Details */
+        .wedding-details { background: rgba(255,255,255,0.92); border-radius:15px; padding:1.5rem; margin:2rem 0; box-shadow:0 6px 24px rgba(0,0,0,0.06); }
+        .detail-item { margin:1rem 0; padding:1rem; background: rgba(212,175,55,0.08); border-radius:10px; border-left:4px solid var(--gold); }
+        .detail-item h3 { color: var(--burgundy); margin-bottom:.3rem; }
+        .detail-item p { color: var(--rose); }
 
         /* Floating Hearts */
-        .heart {
-            position: fixed;
-            color: var(--rose);
-            font-size: 20px;
-            pointer-events: none;
-            animation: float 6s linear infinite;
-            opacity: 0;
-        }
+        .heart { position: fixed; color: var(--rose); font-size: 20px; pointer-events: none; animation: float 6s linear infinite; opacity: 0; }
+        @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-100px) rotate(360deg); opacity: 0; } }
 
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Logout button */
-        .logout-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--burgundy);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .logout-btn:hover {
-            background: var(--rose);
-            transform: scale(1.05);
-        }
+        .logout-btn { position: fixed; top: 20px; right: 20px; background: var(--burgundy); color: white; border: none; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; font-size: 0.9rem; z-index: 1000; }
+        .logout-btn:hover { background: var(--rose); transform: scale(1.05); }
 
         /* Image fallback styles */
-        .carousel-item.fallback {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--blush), var(--rose));
-            color: white;
-            font-size: 1.2rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+        .carousel-item.fallback { display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,var(--blush),var(--rose)); color:white; font-size:1.1rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.25); }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
-            .carousel-container {
-                height: 300px;
-            }
-            
-            .carousel-slide {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .carousel-item {
-                flex: 1;
-                min-height: 90px;
-            }
-            
-            .welcome-message h1 {
-                font-size: 2rem;
-            }
-            
-            .main-content {
-                padding: 1rem;
-            }
-            
-            .rsvp-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .carousel-nav {
-                width: 40px;
-                height: 40px;
-                font-size: 20px;
-            }
+            .carousel-container { height: 300px; }
+            .carousel-slide { flex-direction: column; gap: 6px; }
+            .carousel-item { min-height: 90px; }
+            .welcome-message h1 { font-size: 1.9rem; }
+            .main-content { padding: 1rem; }
+            .carousel-nav { width: 40px; height: 40px; font-size: 20px; }
         }
 
-        /* Loading animation */
-        .carousel-loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            color: var(--burgundy);
-            font-size: 1.2rem;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .carousel-loading::after {
-            content: '...';
-            animation: pulse 1.5s infinite;
-        }
+        /* small loading placeholder text */
+        .carousel-loading { display:flex; justify-content:center; align-items:center; height:100%; color:var(--burgundy); font-size:1.1rem;}
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+        .carousel-loading::after { content: '...'; animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
+    <div class="loading-progress" id="loadingProgress"></div>
+    <div class="perf-stats" id="perfStats" aria-hidden="true"></div>
+
     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
 
     <!-- Enhanced Photo Carousel -->
-    <div class="carousel-container">
-        <button class="carousel-nav prev" onclick="previousSlide()">‹</button>
-        <button class="carousel-nav next" onclick="nextSlide()">›</button>
-        
-        <div class="carousel" id="photoCarousel">
-            <div class="carousel-loading">Loading beautiful memories</div>
+    <div class="carousel-container" aria-roledescription="carousel">
+        <button class="carousel-nav prev" aria-label="Previous" onclick="previousSlide()">‹</button>
+        <button class="carousel-nav next" aria-label="Next" onclick="nextSlide()">›</button>
+
+        <div class="carousel" id="photoCarousel" aria-live="polite" role="region">
+            <div class="carousel-loading">🎨 Preparing your beautiful memories</div>
         </div>
-        
-        <div class="carousel-dots" id="carouselDots"></div>
+
+        <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Slide indicators"></div>
     </div>
 
     <!-- Main Content -->
@@ -414,354 +315,598 @@
 
     <!-- Audio element for wedding music -->
     <audio id="weddingMusic" loop>
-        <source src="assets/wedding-song.mp3" type="audio/mpeg">
+        <source src="assets/wedding-song.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
     </audio>
 
     <script>
-        let currentGuest = null;
-        let currentSlide = 0;
-        let totalSlides = 0;
-        let autoSlideInterval = null;
-        let allPhotos = [];
+    /*****************************************************************
+     * Optimized carousel with:
+     *  - IntersectionObserver lazy loading
+     *  - In-memory cache with limited size
+     *  - Priority load for first slide
+     *  - Background batch prefetch of upcoming slides
+     *  - Service worker registration (via Blob)
+     *****************************************************************/
 
-        // All your photo files from the assets folder
-        const availablePhotos = [
-            'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
-            'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
-            'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
-            'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
-            'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg',
-            'IMG_0362.jpg', 'IMG_0382.jpg', 'IMG_0385.jpg', 'IMG_0386.jpg',
-            'IMG_0393.jpg', 'IMG_0394.jpg', 'IMG_0397.jpg', 'IMG_0400.jpg',
-            'IMG_0405.jpg', 'IMG_0407.jpg', 'IMG_0409.jpg', 'IMG_0416.jpg',
-            'IMG_0417.jpg', 'IMG_0418.jpg', 'IMG_0423.jpg', 'IMG_0424.jpg',
-            'IMG_0431.jpg', 'IMG_0436.jpg', 'IMG_0439.jpg', 'IMG_0440.jpg',
-            'IMG_0442.jpg', 'IMG_0446.jpg', 'IMG_0448.jpg', 'IMG_0451.jpg',
-            'IMG_0458.jpg', 'IMG_0467.jpg', 'IMG_0470.jpg', 'IMG_0471.jpg',
-            'IMG_0472.jpg', 'IMG_0473.jpg', 'IMG_0475.jpg', 'IMG_0478.jpg',
-            'IMG_0481.jpg', 'IMG_0483.jpg', 'IMG_0487.jpg', 'IMG_0489.jpg',
-            'IMG_0493.jpg', 'IMG_0502.jpg', 'IMG_0504.jpg', 'IMG_0505.jpg',
-            'IMG_0507.jpg', 'IMG_0508.jpg', 'IMG_0511.jpg', 'IMG_0515.jpg',
-            'IMG_0522.jpg', 'IMG_0548.jpg', 'IMG_0551.jpg', 'IMG_0552.jpg',
-            'IMG_0559.jpg', 'IMG_0560.jpg', 'IMG_0565.jpg', 'IMG_0566.jpg',
-            'IMG_0570.jpg', 'IMG_0572.jpg', 'IMG_0576.jpg', 'IMG_0579.jpg',
-            'IMG_0580.jpg', 'IMG_0583.jpg', 'IMG_0588.jpg', 'IMG_0589.jpg',
-            'IMG_0596.jpg', 'IMG_0606.jpg', 'IMG_0614.jpg', 'IMG_0616.jpg'
-        ];
+    let currentGuest = null;
+    let currentSlide = 0;
+    let totalSlides = 0;
+    let autoSlideInterval = null;
+    let allPhotos = [];
+    const assetsBase = 'assets/'; // where images live
 
-        // Initialize page when loaded
-        window.onload = function() {
-            // Get guest data from sessionStorage or redirect to login
-            const guestData = sessionStorage.getItem('currentGuest');
-            if (!guestData) {
-                window.location.href = 'index.html';
-                return;
+    // Performance tracking
+    const perfStats = {
+        imagesLoaded: 0,
+        imagesFailed: 0,
+        cacheHits: 0,
+        loadStartTime: Date.now(),
+        averageLoadTime: 0
+    };
+
+    // Your available photos (unchanged)
+    const availablePhotos = [
+        'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
+        'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
+        'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
+        'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
+        'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg',
+        'IMG_0362.jpg', 'IMG_0382.jpg', 'IMG_0385.jpg', 'IMG_0386.jpg',
+        'IMG_0393.jpg', 'IMG_0394.jpg', 'IMG_0397.jpg', 'IMG_0400.jpg',
+        'IMG_0405.jpg', 'IMG_0407.jpg', 'IMG_0409.jpg', 'IMG_0416.jpg',
+        'IMG_0417.jpg', 'IMG_0418.jpg', 'IMG_0423.jpg', 'IMG_0424.jpg',
+        'IMG_0431.jpg', 'IMG_0436.jpg', 'IMG_0439.jpg', 'IMG_0440.jpg',
+        'IMG_0442.jpg', 'IMG_0446.jpg', 'IMG_0448.jpg', 'IMG_0451.jpg',
+        'IMG_0458.jpg', 'IMG_0467.jpg', 'IMG_0470.jpg', 'IMG_0471.jpg',
+        'IMG_0472.jpg', 'IMG_0473.jpg', 'IMG_0475.jpg', 'IMG_0478.jpg',
+        'IMG_0481.jpg', 'IMG_0483.jpg', 'IMG_0487.jpg', 'IMG_0489.jpg',
+        'IMG_0493.jpg', 'IMG_0502.jpg', 'IMG_0504.jpg', 'IMG_0505.jpg',
+        'IMG_0507.jpg', 'IMG_0508.jpg', 'IMG_0511.jpg', 'IMG_0515.jpg',
+        'IMG_0522.jpg', 'IMG_0548.jpg', 'IMG_0551.jpg', 'IMG_0552.jpg',
+        'IMG_0559.jpg', 'IMG_0560.jpg', 'IMG_0565.jpg', 'IMG_0566.jpg',
+        'IMG_0570.jpg', 'IMG_0572.jpg', 'IMG_0576.jpg', 'IMG_0579.jpg',
+        'IMG_0580.jpg', 'IMG_0583.jpg', 'IMG_0588.jpg', 'IMG_0589.jpg',
+        'IMG_0596.jpg', 'IMG_0606.jpg', 'IMG_0614.jpg', 'IMG_0616.jpg'
+    ];
+
+    /* ---------- Image Cache Manager (simple LRU-like) ---------- */
+    class ImageCacheManager {
+        constructor(maxSize = 80) {
+            this.cache = new Map();
+            this.maxSize = maxSize;
+            this.loading = new Map(); // promises for in-flight loads
+        }
+
+        async load(src, priority = 'normal') {
+            // If cached => return immediately
+            if (this.cache.has(src)) {
+                perfStats.cacheHits++;
+                return this.cache.get(src);
             }
 
-            currentGuest = JSON.parse(guestData);
-            document.getElementById('guestName').textContent = currentGuest.name;
-            
-            // Update RSVP status display
-            updateRSVPStatus();
-
-            // Initialize carousel with all photos
-            initializeCarousel();
-
-            // Play wedding music
-            playWeddingMusic();
-
-            // Start floating hearts animation
-            startFloatingHearts();
-        };
-
-        function initializeCarousel() {
-            // Filter out audio files and keep only images
-            allPhotos = availablePhotos.filter(photo => 
-                photo.toLowerCase().endsWith('.jpg') || 
-                photo.toLowerCase().endsWith('.jpeg') || 
-                photo.toLowerCase().endsWith('.png')
-            );
-
-            // Shuffle photos for variety
-            allPhotos = shuffleArray(allPhotos);
-
-            // Group photos into slides of 3
-            const photoSlides = [];
-            for (let i = 0; i < allPhotos.length; i += 3) {
-                photoSlides.push(allPhotos.slice(i, i + 3));
+            if (this.loading.has(src)) {
+                return this.loading.get(src);
             }
 
-            totalSlides = photoSlides.length;
-            
-            // Build carousel HTML
-            const carousel = document.getElementById('photoCarousel');
-            carousel.innerHTML = '';
-
-            photoSlides.forEach((slidePhotos, slideIndex) => {
-                const slide = document.createElement('div');
-                slide.className = 'carousel-slide';
-                
-                slidePhotos.forEach((photo, photoIndex) => {
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item';
-                    item.style.backgroundImage = `url('assets/${photo}')`;
-                    item.setAttribute('data-fallback', `💕 Photo ${slideIndex * 3 + photoIndex + 1}`);
-                    
-                    // Add error handling for missing images
-                    const img = new Image();
-                    img.onload = () => {
-                        // Image loaded successfully
-                    };
-                    img.onerror = () => {
-                        item.classList.add('fallback');
-                        item.innerHTML = item.getAttribute('data-fallback');
-                        item.style.backgroundImage = 'none';
-                    };
-                    img.src = `assets/${photo}`;
-                    
-                    slide.appendChild(item);
-                });
-                
-                carousel.appendChild(slide);
+            const p = this._loadImg(src, priority).then(url => {
+                // Put into cache (LRU: delete oldest if needed)
+                if (this.cache.size >= this.maxSize) {
+                    const firstKey = this.cache.keys().next().value;
+                    this.cache.delete(firstKey);
+                }
+                this.cache.set(src, url);
+                this.loading.delete(src);
+                return url;
+            }).catch(err => {
+                this.loading.delete(src);
+                throw err;
             });
 
-            // Create dots for navigation
-            createDots();
-
-            // Start auto-slide
-            startAutoSlide();
+            this.loading.set(src, p);
+            return p;
         }
 
-        function createDots() {
-            const dotsContainer = document.getElementById('carouselDots');
-            dotsContainer.innerHTML = '';
+        _loadImg(src, priority) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const start = performance.now();
 
-            for (let i = 0; i < totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                if (i === 0) dot.classList.add('active');
-                dot.onclick = () => goToSlide(i);
-                dotsContainer.appendChild(dot);
-            }
-        }
+                img.onload = () => {
+                    const loadTime = Math.max(1, Math.round(performance.now() - start));
+                    perfStats.averageLoadTime = perfStats.averageLoadTime ? Math.round((perfStats.averageLoadTime + loadTime) / 2) : loadTime;
+                    perfStats.imagesLoaded++;
+                    this._updatePerfElement();
+                    resolve(src);
+                };
 
-        function nextSlide() {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            updateCarousel();
-        }
+                img.onerror = (e) => {
+                    perfStats.imagesFailed++;
+                    this._updatePerfElement();
+                    reject(new Error('Failed to load ' + src));
+                };
 
-        function previousSlide() {
-            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-            updateCarousel();
-        }
+                // Browser hints
+                if ('loading' in img) {
+                    img.loading = (priority === 'high') ? 'eager' : 'lazy';
+                }
 
-        function goToSlide(index) {
-            currentSlide = index;
-            updateCarousel();
-        }
-
-        function updateCarousel() {
-            const carousel = document.getElementById('photoCarousel');
-            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
-
-            // Update dots
-            const dots = document.querySelectorAll('.dot');
-            dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentSlide);
-            });
-
-            // Reset auto-slide timer
-            restartAutoSlide();
-        }
-
-        function startAutoSlide() {
-            autoSlideInterval = setInterval(nextSlide, 4000); // Change every 4 seconds
-        }
-
-        function restartAutoSlide() {
-            clearInterval(autoSlideInterval);
-            startAutoSlide();
-        }
-
-        function shuffleArray(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        }
-
-        function playWeddingMusic() {
-            const audio = document.getElementById('weddingMusic');
-            audio.volume = 0.3; // Set to 30% volume
-            
-            // Try to play audio (modern browsers require user interaction)
-            audio.play().catch(function(error) {
-                console.log('Audio autoplay prevented:', error);
-                // Show a subtle button to enable music
-                showMusicButton();
+                // assign src
+                img.src = src;
             });
         }
 
-        function showMusicButton() {
-            const musicBtn = document.createElement('button');
-            musicBtn.innerHTML = '🎵 Enable Music';
-            musicBtn.style.cssText = `
-                position: fixed;
-                top: 70px;
-                right: 20px;
-                background: var(--gold);
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 20px;
-                cursor: pointer;
-                font-size: 0.9rem;
-                z-index: 1000;
+        _updatePerfElement() {
+            const el = document.getElementById('perfStats');
+            if (!el) return;
+            if (!window.location.search.includes('debug=true')) { el.style.display = 'none'; return; }
+            el.style.display = 'block';
+            el.innerHTML = `
+                📊 Loaded: ${perfStats.imagesLoaded}/${allPhotos.length}<br>
+                ❌ Failed: ${perfStats.imagesFailed}<br>
+                ♻️ Cache hits: ${perfStats.cacheHits}<br>
+                ⏱ Avg load: ${perfStats.averageLoadTime}ms
             `;
-            musicBtn.onclick = function() {
-                document.getElementById('weddingMusic').play();
-                musicBtn.remove();
-            };
-            document.body.appendChild(musicBtn);
+        }
+    }
+
+    const cacheManager = new ImageCacheManager(60);
+
+    /* ---------- IntersectionObserver for lazy loading slides ---------- */
+    let slideObserver;
+    function makeSlideObserver() {
+        if ('IntersectionObserver' in window) {
+            slideObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const slide = entry.target;
+                        // load images for that slide
+                        loadSlideElements(slide, 'normal');
+                        slideObserver.unobserve(slide);
+                    }
+                });
+            }, { root: null, rootMargin: '400px', threshold: 0.01 });
+        } else {
+            slideObserver = null;
+        }
+    }
+
+    /* ---------- Service Worker: register from a Blob (no separate file required) ---------- */
+    async function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const swCode = `
+                const CACHE_NAME = 'wedding-cache-v1';
+                const RUNTIME = 'runtime-cache';
+                const PRECACHE_URLS = [
+                    './',
+                    'index.html',
+                    'assets/wedding-song.mp3'
+                ];
+                self.addEventListener('install', event => {
+                    self.skipWaiting();
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS).catch(()=>{}))
+                    );
+                });
+                self.addEventListener('activate', event => {
+                    event.waitUntil(self.clients.claim());
+                });
+                self.addEventListener('fetch', event => {
+                    const request = event.request;
+                    const url = new URL(request.url);
+
+                    // Only handle GET
+                    if (request.method !== 'GET') return;
+
+                    // Image & asset caching: Cache-first, fall back to network, then fallback image
+                    if (request.destination === 'image' || url.pathname.startsWith('/assets/')) {
+                        event.respondWith(
+                            caches.open(RUNTIME).then(async cache => {
+                                const cached = await cache.match(request);
+                                if (cached) return cached;
+                                try {
+                                    const response = await fetch(request);
+                                    cache.put(request, response.clone());
+                                    // Limit cache size (simple approach)
+                                    trimCache(RUNTIME, 200);
+                                    return response;
+                                } catch (err) {
+                                    // fallback to an empty Response or a tiny inline SVG
+                                    return new Response('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%"height="100%"fill="#f8cfd5"/></svg>', { headers: { 'Content-Type': 'image/svg+xml' }});
+                                }
+                            })
+                        );
+                        return;
+                    }
+
+                    // For other requests, network-first then cache
+                    event.respondWith(
+                        fetch(request).then(resp => {
+                            return resp;
+                        }).catch(() => caches.match(request))
+                    );
+                });
+
+                async function trimCache(name, maxItems) {
+                    const cache = await caches.open(name);
+                    const keys = await cache.keys();
+                    if (keys.length > maxItems) {
+                        await cache.delete(keys[0]);
+                        trimCache(name, maxItems);
+                    }
+                }
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            await navigator.serviceWorker.register(swUrl);
+            console.info('Service worker registered from blob ✅');
+        } catch (err) {
+            console.warn('Service worker registration failed', err);
+        }
+    }
+
+    /* ---------- Build carousel HTML, but lazy-load backgrounds ---------- */
+    function initializeCarouselOptimized() {
+        // Filter image list just in case
+        allPhotos = availablePhotos.filter(p => p.match(/\.(jpe?g|png|webp)$/i));
+        // prioritise a few key photos at front
+        const priority = ['ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg'];
+        const prioritySet = new Set(priority);
+        const other = allPhotos.filter(p => !prioritySet.has(p));
+        // shuffle others
+        shuffleArrayInplace(other);
+        allPhotos = [...priority.filter(p => allPhotos.includes(p)), ...other];
+
+        // group into slides of 3
+        const photoSlides = [];
+        for (let i = 0; i < allPhotos.length; i += 3) photoSlides.push(allPhotos.slice(i, i + 3));
+        totalSlides = photoSlides.length;
+
+        // render slides placeholders
+        const carousel = document.getElementById('photoCarousel');
+        carousel.innerHTML = '';
+        photoSlides.forEach((slidePhotos, idx) => {
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
+            slide.setAttribute('data-slide', idx);
+            slide.setAttribute('aria-hidden', idx === 0 ? 'false' : 'true');
+
+            slidePhotos.forEach((photo, pIdx) => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item loading';
+                item.setAttribute('data-photo', photo);
+                item.setAttribute('data-index', idx);
+                item.setAttribute('role', 'img');
+                item.setAttribute('aria-label', `Photo ${idx*3 + pIdx + 1}`);
+                // the actual background will be set when loading occurs
+                item.style.backgroundColor = 'var(--soft-pink)';
+                slide.appendChild(item);
+            });
+
+            carousel.appendChild(slide);
+        });
+
+        createDots();
+        // make observer for slides
+        makeSlideObserver();
+
+        // observe first two slides immediately to load priority images
+        const slides = document.querySelectorAll('.carousel-slide');
+        if (slides.length) {
+            // load first slide eagerly (high priority)
+            loadSlideByIndex(0, 'high');
+            // preload slides 1 & 2 in background
+            preloadSlides([1,2,3], 2);
+            // observe remaining slides
+            slides.forEach((s, i) => {
+                if (i > 0 && slideObserver) slideObserver.observe(s);
+            });
         }
 
-        function startFloatingHearts() {
-            setInterval(function() {
-                createFloatingHeart();
-            }, 2000);
-        }
+        // setup hover pause
+        const container = document.querySelector('.carousel-container');
+        container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+        container.addEventListener('mouseleave', () => restartAutoSlide());
 
-        function createFloatingHeart() {
+        startAutoSlide();
+    }
+
+    /* ---------- Helpers: load slide, load item ---------- */
+    async function loadSlideByIndex(index, priority='normal') {
+        const slide = document.querySelector(`.carousel-slide[data-slide="${index}"]`);
+        if (!slide) return;
+        slide.setAttribute('aria-hidden', 'false');
+
+        const items = Array.from(slide.querySelectorAll('.carousel-item'));
+        await Promise.allSettled(items.map(it => loadItemElement(it, priority)));
+    }
+
+    async function loadSlideElements(slideEl, priority='normal') {
+        const items = Array.from(slideEl.querySelectorAll('.carousel-item.loading'));
+        await Promise.allSettled(items.map(it => loadItemElement(it, priority)));
+    }
+
+    async function loadItemElement(item, priority='normal') {
+        const photo = item.getAttribute('data-photo');
+        const url = assetsBase + photo;
+
+        // Avoid re-loading if already loaded
+        if (item.classList.contains('loaded')) return;
+
+        try {
+            // use cache manager
+            await cacheManager.load(url, priority);
+
+            // apply background + style
+            item.style.backgroundImage = `url('${url}')`;
+            item.classList.remove('loading');
+            item.classList.add('loaded');
+            item.style.opacity = '1';
+        } catch (err) {
+            console.warn('Image failed', url, err);
+            item.classList.remove('loading');
+            item.classList.add('error');
+            const fallbackText = item.getAttribute('data-fallback') || '💕 Beautiful memory';
+            item.textContent = fallbackText;
+            item.style.backgroundImage = 'none';
+        }
+    }
+
+    /* ---------- Preloading upcoming slides in batches ---------- */
+    async function preloadSlides(indices = [], batchSize = 3) {
+        const toPrefetch = [];
+        indices.forEach(i => {
+            const slide = document.querySelector(`.carousel-slide[data-slide="${i}"]`);
+            if (!slide) return;
+            slide.querySelectorAll('.carousel-item[data-photo]').forEach(it => {
+                const photo = it.getAttribute('data-photo');
+                const url = assetsBase + photo;
+                if (!cacheManager.cache.has(url) && !cacheManager.loading.has(url)) {
+                    toPrefetch.push(url);
+                }
+            });
+        });
+
+        // fetch in small batches
+        for (let i = 0; i < toPrefetch.length; i += batchSize) {
+            const batch = toPrefetch.slice(i, i + batchSize);
+            await Promise.allSettled(batch.map(u => cacheManager.load(u, 'low')));
+            updateLoadingProgress(i + batch.length, toPrefetch.length);
+            // small pause
+            await new Promise(r => setTimeout(r, 120));
+        }
+    }
+
+    /* ---------- Update progress bar ---------- */
+    function updateLoadingProgress(done, total) {
+        const bar = document.getElementById('loadingProgress');
+        if (!bar) return;
+        if (total === 0) { bar.style.width = '0%'; return; }
+        const pct = Math.min(100, Math.round((done / total) * 100));
+        bar.style.width = pct + '%';
+        if (pct >= 100) setTimeout(()=> bar.style.width = '0%', 700);
+    }
+
+    /* ---------- Dots and navigation ---------- */
+    function createDots() {
+        const dotsContainer = document.getElementById('carouselDots');
+        dotsContainer.innerHTML = '';
+        for (let i=0;i<totalSlides;i++){
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.setAttribute('role','tab');
+            dot.setAttribute('aria-selected', i===0 ? 'true' : 'false');
+            if (i===0) dot.classList.add('active');
+            dot.addEventListener('click', ()=> goToSlide(i));
+            dotsContainer.appendChild(dot);
+        }
+    }
+
+    async function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        await updateCarousel();
+    }
+
+    async function previousSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        await updateCarousel();
+    }
+
+    async function goToSlide(i) {
+        currentSlide = i;
+        await updateCarousel();
+    }
+
+    async function updateCarousel() {
+        const carousel = document.getElementById('photoCarousel');
+        carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+        // update dots
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((d, idx) => {
+            d.classList.toggle('active', idx === currentSlide);
+            d.setAttribute('aria-selected', idx === currentSlide ? 'true' : 'false');
+        });
+
+        // load current slide with high priority
+        await loadSlideByIndex(currentSlide, 'high');
+
+        // preload next 2 slides
+        const upcoming = [currentSlide + 1, currentSlide + 2, currentSlide + 3].map(n => (n % totalSlides + totalSlides) % totalSlides);
+        preloadSlides(upcoming, 3);
+
+        restartAutoSlide();
+    }
+
+    function startAutoSlide() {
+        if (autoSlideInterval) clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(() => nextSlide(), 5000);
+    }
+
+    function restartAutoSlide() {
+        clearInterval(autoSlideInterval);
+        startAutoSlide();
+    }
+
+    /* ---------- Utility: shuffle ---------- */
+    function shuffleArrayInplace(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    /* ---------- RSVP, Music, Hearts, Confetti, Logout ---------- */
+    async function rsvp(status) {
+        if (!currentGuest) return;
+        // Try to persist to server; fallback to local storage
+        try {
+            const res = await fetch('/api/rsvp', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ phone: currentGuest?.phone, status })
+            });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.error || 'Server error');
+            currentGuest.rsvp_status = status;
+            sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+            updateRSVPStatus();
+            if (status === 'accepted') { showConfetti(); alert("🎉 Thank you! Can't wait!"); }
+            else alert("💔 We'll miss you!");
+        } catch (err) {
+            // offline fallback
+            console.warn('RSVP fallback (offline)', err);
+            currentGuest.rsvp_status = status;
+            sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+            updateRSVPStatus();
+            if (status === 'accepted') { showConfetti(); alert("🎉 Thank you! (Offline mode)"); }
+            else alert("💔 We'll miss you! (Offline mode)");
+        }
+    }
+
+    function updateRSVPStatus() {
+        const statusDiv = document.getElementById('rsvpStatus');
+        const s = currentGuest?.rsvp_status;
+        if (s === 'accepted') {
+            statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
+            statusDiv.style.color = 'var(--gold)';
+        } else if (s === 'declined') {
+            statusDiv.innerHTML = '❌ You\'ll be missed!';
+            statusDiv.style.color = 'var(--rose)';
+        } else {
+            statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
+            statusDiv.style.color = 'var(--burgundy)';
+        }
+    }
+
+    function showConfetti() {
+        for (let i=0;i<30;i++){
+            setTimeout(()=> createConfetti(), i*90);
+        }
+    }
+
+    function createConfetti(){
+        const emojis = ['🎉','🎊','✨','💫','🌟','💍','💕'];
+        const el = document.createElement('div');
+        el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        el.style.cssText = `
+            position: fixed;
+            left: ${Math.random()*95}vw;
+            top: -10px;
+            font-size: ${12 + Math.random()*24}px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: rotate(${Math.random()*360}deg);
+            animation: fall ${3 + Math.random()*2}s linear forwards;
+        `;
+        document.body.appendChild(el);
+        setTimeout(()=> el.remove(), 5500);
+    }
+
+    function logout() {
+        sessionStorage.removeItem('currentGuest');
+        window.location.href = 'index.html';
+    }
+
+    function playWeddingMusic() {
+        const audio = document.getElementById('weddingMusic');
+        if (!audio) return;
+        audio.volume = 0.32;
+        audio.play().catch(e=>{
+            // show a small enable button
+            const b = document.createElement('button');
+            b.textContent = '🎵 Enable Music';
+            b.style.cssText = 'position:fixed;top:70px;right:20px;background:var(--gold);color:#fff;border:none;padding:.5rem 1rem;border-radius:20px;z-index:1000;';
+            b.addEventListener('click', ()=> { audio.play().catch(()=>{}); b.remove(); }, { once:true });
+            document.body.appendChild(b);
+        });
+    }
+
+    function startFloatingHearts() {
+        setInterval(()=> {
             const heart = document.createElement('div');
             heart.className = 'heart';
-            heart.innerHTML = Math.random() > 0.5 ? '💕' : '💖';
+            heart.textContent = Math.random() > 0.5 ? '💕' : '💖';
             heart.style.left = Math.random() * window.innerWidth + 'px';
-            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            heart.style.fontSize = (10 + Math.random() * 20) + 'px';
+            heart.style.animationDuration = (4 + Math.random() * 4) + 's';
             document.body.appendChild(heart);
+            setTimeout(()=> heart.remove(), 8000);
+        }, 1200);
+    }
 
-            // Remove heart after animation
-            setTimeout(() => {
-                heart.remove();
-            }, 7000);
-        }
-
-        async function rsvp(status) {
-            if (!currentGuest) return;
-
-            try {
-                const response = await fetch('/api/rsvp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phone: currentGuest.phone,
-                        status: status
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentGuest.rsvp_status = status;
-                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-                    updateRSVPStatus();
-                    
-                    if (status === 'accepted') {
-                        showConfetti();
-                        alert('🎉 Fantastic! We can\'t wait to celebrate with you!');
-                    } else {
-                        alert('💔 We\'ll miss you! Hope to see you at the next celebration!');
-                    }
-                } else {
-                    alert('Error updating RSVP: ' + result.error);
-                }
-            } catch (error) {
-                console.error('RSVP Error:', error);
-                // For testing, allow offline RSVP
-                currentGuest.rsvp_status = status;
-                sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-                updateRSVPStatus();
-                
-                if (status === 'accepted') {
-                    showConfetti();
-                    alert('🎉 Fantastic! We can\'t wait to celebrate with you! (Offline mode)');
-                } else {
-                    alert('💔 We\'ll miss you! (Offline mode)');
-                }
-            }
-        }
-
-        function updateRSVPStatus() {
-            const statusDiv = document.getElementById('rsvpStatus');
-            if (currentGuest.rsvp_status === 'accepted') {
-                statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
-                statusDiv.style.color = 'var(--gold)';
-            } else if (currentGuest.rsvp_status === 'declined') {
-                statusDiv.innerHTML = '❌ You\'ll be missed!';
-                statusDiv.style.color = 'var(--rose)';
-            } else {
-                statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
-                statusDiv.style.color = 'var(--burgundy)';
-            }
-        }
-
-        function showConfetti() {
-            // Simple confetti effect with emojis
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => {
-                    createConfetti();
-                }, i * 100);
-            }
-        }
-
-        function createConfetti() {
-            const confetti = document.createElement('div');
-            const emojis = ['🎉', '🎊', '✨', '💫', '🌟', '💍', '💕'];
-            confetti.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
-            confetti.style.cssText = `
-                position: fixed;
-                top: -50px;
-                left: ${Math.random() * window.innerWidth}px;
-                font-size: 24px;
-                pointer-events: none;
-                animation: fall ${Math.random() * 2 + 3}s linear forwards;
-                z-index: 1000;
-            `;
-            
-            document.body.appendChild(confetti);
-            
-            setTimeout(() => confetti.remove(), 5000);
-        }
-
-        function logout() {
-            sessionStorage.removeItem('currentGuest');
+    /* ---------- Page load initialize ---------- */
+    window.addEventListener('load', async () => {
+        // guest check
+        const guestData = sessionStorage.getItem('currentGuest');
+        if (!guestData) {
+            // if missing guest, redirect to index (your original logic)
             window.location.href = 'index.html';
+            return;
         }
+        currentGuest = JSON.parse(guestData);
+        document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
 
-        // Add falling animation for confetti
+        // initialize carousel
+        initializeCarouselOptimized();
+
+        // update RSVP UI
+        updateRSVPStatus();
+
+        // music & hearts
+        playWeddingMusic();
+        startFloatingHearts();
+
+        // register service worker
+        registerServiceWorker().catch(()=>{ /* best-effort */ });
+    });
+
+    // small CSS for confetti animation appended programmatically:
+    (function addConfettiKeyframes(){
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fall {
-                to {
-                    transform: translateY(100vh) rotate(360deg);
-                    opacity: 0;
-                }
+                to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
             }
         `;
         document.head.appendChild(style);
+    })();
 
-        // Pause auto-slide when user hovers over carousel
-        const carouselContainer = document.querySelector('.carousel-container');
-        carouselContainer.addEventListener('mouseenter', () => {
-            clearInterval(autoSlideInterval);
-        });
-        carouselContainer.addEventListener('mouseleave', () => {
-            startAutoSlide();
-        });
+    /*****************************************************************
+     * Accessibility: keyboard navigation for carousel
+     *****************************************************************/
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') previousSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+    });
+
+    /* ---------- Pause auto-slide on interaction ---------- */
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) clearInterval(autoSlideInterval);
+        else restartAutoSlide();
+    });
+
     </script>
 </body>
 </html>
