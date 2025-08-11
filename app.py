@@ -584,6 +584,83 @@ def test_send():
     else:
         return jsonify({"success": False, "error": "Failed to send test message"}), 500
 
+@app.route("/api/delete_guest/<int:guest_id>", methods=["DELETE"])
+def delete_guest(guest_id):
+    """Delete a specific guest by ID"""
+    session = Session()
+    guest = session.get(Guest, guest_id)
+    
+    if not guest:
+        session.close()
+        return jsonify({"error": "Guest not found"}), 404
+    
+    guest_name = guest.name
+    session.delete(guest)
+    session.commit()
+    session.close()
+    
+    logger.info(f"🗑️ Deleted guest: {guest_name} (ID: {guest_id})")
+    return jsonify({"message": f"Guest {guest_name} deleted successfully"})
+
+@app.route("/api/delete_all_guests", methods=["DELETE"])
+def delete_all_guests():
+    """Delete ALL guests - use with caution!"""
+    session = Session()
+    guest_count = session.query(Guest).count()
+    
+    if guest_count == 0:
+        session.close()
+        return jsonify({"message": "No guests to delete"})
+    
+    session.query(Guest).delete()
+    session.commit()
+    session.close()
+    
+    logger.info(f"🗑️ Deleted ALL {guest_count} guests from database")
+    return jsonify({"message": f"Successfully deleted all {guest_count} guests"})
+
+@app.route("/api/delete_test_guests", methods=["DELETE"])
+def delete_test_guests():
+    """Delete guests that look like test users"""
+    session = Session()
+    
+    # Define patterns that indicate test users
+    test_patterns = [
+        'test', 'Test', 'TEST',
+        'demo', 'Demo', 'DEMO',
+        'example', 'Example', 'EXAMPLE',
+        'dummy', 'Dummy', 'DUMMY',
+        'sample', 'Sample', 'SAMPLE',
+        'fake', 'Fake', 'FAKE'
+    ]
+    
+    deleted_guests = []
+    
+    # Find guests with test-like names
+    for pattern in test_patterns:
+        test_guests = session.query(Guest).filter(Guest.name.contains(pattern)).all()
+        for guest in test_guests:
+            deleted_guests.append({"name": guest.name, "phone": guest.phone})
+            session.delete(guest)
+    
+    # Also delete guests with obvious test phone numbers
+    test_phone_patterns = ['1234567', '0000000', '1111111', '9999999']
+    for pattern in test_phone_patterns:
+        test_guests = session.query(Guest).filter(Guest.phone.contains(pattern)).all()
+        for guest in test_guests:
+            if {"name": guest.name, "phone": guest.phone} not in deleted_guests:
+                deleted_guests.append({"name": guest.name, "phone": guest.phone})
+                session.delete(guest)
+    
+    session.commit()
+    session.close()
+    
+    logger.info(f"🗑️ Deleted {len(deleted_guests)} test guests")
+    return jsonify({
+        "message": f"Deleted {len(deleted_guests)} test guests",
+        "deleted_guests": deleted_guests
+    })
+
 if __name__ == "__main__":
     logger.info("🚀 Starting Multi-Provider Wedding Invitation Backend...")
     logger.info(f"📱 WhatsApp Provider: {WHATSAPP_PROVIDER.upper()}")
