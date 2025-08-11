@@ -309,8 +309,8 @@ Hi {guest_name}! 💍
 
 You're cordially invited to join us for our special day.
 
-📱 RSVP here: {LOGIN_LINK}
-📱 Username will be your phone number = Your phone number.
+📱 RSVP: {LOGIN_LINK}
+📱 Username: Your cell number
 🔐 Your password: {guest_password}
 
 📅 Date: Sunday, September 28th, 2025
@@ -363,8 +363,8 @@ Hi {guest_name}! 💍
 
 You're cordially invited to join us for our special day.
 
-📱 RSVP here: {LOGIN_LINK}
-📱 Username will be your phone number = Your phone number.
+📱 RSVP: {LOGIN_LINK}
+📱 Username: Your cell number
 🔐 Your password: {guest_password}
 
 📅 Date: Sunday, September 28th, 2025
