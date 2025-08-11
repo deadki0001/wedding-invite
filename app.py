@@ -312,9 +312,9 @@ You're cordially invited to join us for our special day.
 📱 RSVP here: {LOGIN_LINK}
 🔐 Your password: {guest_password}
 
-📅 Date: Saturday, August 12th, 2025
-📍 Venue: The Spectacular Galaxy Gardens
-🕐 Time: 4:00 PM - Late Night
+📅 Date: Saturday, September 28th, 2025
+📍 Venue: Carmel Coastal Retreat
+🕐 Time: 12:00 PM - Midday
 
 Can't wait to celebrate with you! ✨
 
@@ -365,9 +365,9 @@ You're cordially invited to join us for our special day.
 📱 RSVP here: {LOGIN_LINK}
 🔐 Your password: {guest_password}
 
-📅 Date: Saturday, August 12th, 2025
-📍 Venue: The Spectacular Galaxy Gardens
-🕐 Time: 4:00 PM - Late Night
+📅 Date: Saturday, September 28th, 2025
+📍 Venue: Carmel Coastal Retreat
+🕐 Time: 12:00 PM - Midday
 
 Can't wait to celebrate with you! ✨
 
