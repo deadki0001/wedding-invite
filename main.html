@@ -380,33 +380,32 @@
 
         // OPTIMIZED: Your existing photos list (keeping all of them!)
         const availablePhotos = [
-            'ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg',
-            'IMG_0269.jpg', 'IMG_0279.jpg', 'IMG_0282.jpg', 'IMG_0284.jpg',
-            'IMG_0298.jpg', 'IMG_0315.jpg', 'IMG_0319.jpg', 'IMG_0321.jpg',
-            'IMG_0322.jpg', 'IMG_0332.jpg', 'IMG_0338.jpg', 'IMG_0342.jpg',
-            'IMG_0346.jpg', 'IMG_0353.jpg', 'IMG_0358.jpg', 'IMG_0361.jpg',
-            'IMG_0362.jpg', 'IMG_0382.jpg', 'IMG_0385.jpg', 'IMG_0386.jpg',
-            'IMG_0393.jpg', 'IMG_0394.jpg', 'IMG_0397.jpg', 'IMG_0400.jpg',
-            'IMG_0405.jpg', 'IMG_0407.jpg', 'IMG_0409.jpg', 'IMG_0416.jpg',
-            'IMG_0417.jpg', 'IMG_0418.jpg', 'IMG_0423.jpg', 'IMG_0424.jpg',
-            'IMG_0431.jpg', 'IMG_0436.jpg', 'IMG_0439.jpg', 'IMG_0440.jpg',
-            'IMG_0442.jpg', 'IMG_0446.jpg', 'IMG_0448.jpg', 'IMG_0451.jpg',
-            'IMG_0458.jpg', 'IMG_0467.jpg', 'IMG_0470.jpg', 'IMG_0471.jpg',
-            'IMG_0472.jpg', 'IMG_0473.jpg', 'IMG_0475.jpg', 'IMG_0478.jpg',
-            'IMG_0481.jpg', 'IMG_0483.jpg', 'IMG_0487.jpg', 'IMG_0489.jpg',
-            'IMG_0493.jpg', 'IMG_0502.jpg', 'IMG_0504.jpg', 'IMG_0505.jpg',
-            'IMG_0507.jpg', 'IMG_0508.jpg', 'IMG_0511.jpg', 'IMG_0515.jpg',
-            'IMG_0522.jpg', 'IMG_0548.jpg', 'IMG_0551.jpg', 'IMG_0552.jpg',
-            'IMG_0559.jpg', 'IMG_0560.jpg', 'IMG_0565.jpg', 'IMG_0566.jpg',
-            'IMG_0570.jpg', 'IMG_0572.jpg', 'IMG_0576.jpg', 'IMG_0579.jpg',
-            'IMG_0580.jpg', 'IMG_0583.jpg', 'IMG_0588.jpg', 'IMG_0589.jpg',
-            'IMG_0596.jpg', 'IMG_0606.jpg', 'IMG_0614.jpg', 'IMG_0616.jpg'
+            'IMG_0269 Samll.jpeg', 'IMG_0279 Samll.jpeg', 'IMG_0282 Samll.jpeg', 'IMG_0284 Samll.jpeg',
+            'IMG_0298 Samll.jpeg', 'IMG_0315 Samll.jpeg', 'IMG_0319 Samll.jpeg', 'IMG_0321 Samll.jpeg',
+            'IMG_0322 Samll.jpeg', 'IMG_0332 Samll.jpeg', 'IMG_0338 Samll.jpeg', 'IMG_0342 Samll.jpeg',
+            'IMG_0346 Samll.jpeg', 'IMG_0353 Samll.jpeg', 'IMG_0358 Samll.jpeg', 'IMG_0361 Samll.jpeg',
+            'IMG_0362 Samll.jpeg', 'IMG_0382 Samll.jpeg', 'IMG_0385 Samll.jpeg', 'IMG_0386 Samll.jpeg',
+            'IMG_0393 Samll.jpeg', 'IMG_0394 Samll.jpeg', 'IMG_0397 Samll.jpeg', 'IMG_0400 Samll.jpeg',
+            'IMG_0405 Samll.jpeg', 'IMG_0407 Samll.jpeg', 'IMG_0409 Samll.jpeg', 'IMG_0416 Samll.jpeg',
+            'IMG_0417 Samll.jpeg', 'IMG_0418 Samll.jpeg', 'IMG_0423 Samll.jpeg', 'IMG_0424 Samll.jpeg',
+            'IMG_0431 Samll.jpeg', 'IMG_0436 Samll.jpeg', 'IMG_0439 Samll.jpeg', 'IMG_0440 Samll.jpeg',
+            'IMG_0442 Samll.jpeg', 'IMG_0446 Samll.jpeg', 'IMG_0448 Samll.jpeg', 'IMG_0451 Samll.jpeg',
+            'IMG_0458 Samll.jpeg', 'IMG_0467 Samll.jpeg', 'IMG_0470 Samll.jpeg', 'IMG_0471 Samll.jpeg',
+            'IMG_0472 Samll.jpeg', 'IMG_0473 Samll.jpeg', 'IMG_0475 Samll.jpeg', 'IMG_0478 Samll.jpeg',
+            'IMG_0481 Samll.jpeg', 'IMG_0483 Samll.jpeg', 'IMG_0487 Samll.jpeg', 'IMG_0489 Samll.jpeg',
+            'IMG_0493 Samll.jpeg', 'IMG_0502 Samll.jpeg', 'IMG_0504 Samll.jpeg', 'IMG_0505 Samll.jpeg',
+            'IMG_0507 Samll.jpeg', 'IMG_0508 Samll.jpeg', 'IMG_0511 Samll.jpeg', 'IMG_0515 Samll.jpeg',
+            'IMG_0522 Samll.jpeg', 'IMG_0548 Samll.jpeg', 'IMG_0551 Samll.jpeg', 'IMG_0552 Samll.jpeg',
+            'IMG_0559 Samll.jpeg', 'IMG_0560 Samll.jpeg', 'IMG_0565 Samll.jpeg', 'IMG_0566 Samll.jpeg',
+            'IMG_0570 Samll.jpeg', 'IMG_0572 Samll.jpeg', 'IMG_0576 Samll.jpeg', 'IMG_0579 Samll.jpeg',
+            'IMG_0580 Samll.jpeg', 'IMG_0583 Samll.jpeg', 'IMG_0588 Samll.jpeg', 'IMG_0589 Samll.jpeg',
+            'IMG_0596 Samll.jpeg', 'IMG_0606 Samll.jpeg', 'IMG_0614 Samll.jpeg', 'IMG_0616 Samll.jpeg'
         ];
 
         /* OPTIMIZED: Progressive image loading with smart prioritization */
         function initializeCarousel() {
             // Priority photos load first (hero images)
-            const priority = ['ring-hand.jpg', 'wedding1.jpg', 'wedding2.jpg', 'wedding3.jpg'];
+            const priority = ['ring-hand Samll.jpeg', 'wedding1 Samll.jpeg', 'wedding2 Samll.jpeg', 'wedding3 Samll.jpeg'];
             const priorityPhotos = priority.filter(p => availablePhotos.includes(p));
             const otherPhotos = availablePhotos.filter(p => !priority.includes(p));
             
