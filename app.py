@@ -312,7 +312,7 @@ You're cordially invited to join us for our special day.
 📱 RSVP here: {LOGIN_LINK}
 🔐 Your password: {guest_password}
 
-📅 Date: Saturday, September 28th, 2025
+📅 Date: Sunday, September 28th, 2025
 📍 Venue: Carmel Coastal Retreat
 🕐 Time: 12:00 PM - Midday
 
@@ -365,7 +365,7 @@ You're cordially invited to join us for our special day.
 📱 RSVP here: {LOGIN_LINK}
 🔐 Your password: {guest_password}
 
-📅 Date: Saturday, September 28th, 2025
+📅 Date: Sunday, September 28th, 2025
 📍 Venue: Carmel Coastal Retreat
 🕐 Time: 12:00 PM - Midday
 
