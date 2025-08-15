@@ -747,3 +747,321 @@
             item.textContent = '💕 Beautiful Memory';
             updateLoadingProgress();
         }
+
+        function loadSlide(slideIndex) {
+            const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
+            if (!slide) return;
+
+            const items = slide.querySelectorAll('.carousel-item.loading');
+            items.forEach((item, index) => {
+                const photo = item.getAttribute('data-photo');
+                setTimeout(() => {
+                    loadImageOptimized(photo, item);
+                }, index * 150);
+            });
+        }
+
+        function updateLoadingProgress(forcePercent = null) {
+            if (forcePercent !== null) {
+                loadedImages = Math.floor((forcePercent / 100) * totalImages);
+            } else {
+                loadedImages++;
+            }
+            
+            const progress = Math.min((loadedImages / totalImages) * 100, 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+            
+            const loadingStatus = document.getElementById('loadingStatus');
+            if (loadingStatus) {
+                loadingStatus.textContent = `Loading ${Math.round(progress)}% complete...`;
+            }
+            
+            if (progress >= 90) {
+                setTimeout(() => hideLoaders(), 500);
+            }
+        }
+
+        function hideLoaders() {
+            const pageLoader = document.getElementById('pageLoader');
+            const progressLoader = document.getElementById('loadingProgress');
+            
+            if (pageLoader) {
+                pageLoader.style.opacity = '0';
+                setTimeout(() => {
+                    pageLoader.style.display = 'none';
+                }, 500);
+            }
+            
+            if (progressLoader) {
+                progressLoader.style.opacity = '0';
+                setTimeout(() => {
+                    progressLoader.style.display = 'none';
+                }, 500);
+            }
+        }
+
+        function createDots() {
+            const dotsContainer = document.getElementById('carouselDots');
+            dotsContainer.innerHTML = '';
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+        }
+
+        function previousSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+
+        function goToSlide(slideIndex) {
+            currentSlide = slideIndex;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const carousel = document.getElementById('photoCarousel');
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+            
+            loadSlide(currentSlide);
+            setTimeout(() => loadAdjacentSlides(), 100);
+            restartAutoSlide();
+        }
+
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(nextSlide, 4000);
+        }
+
+        function restartAutoSlide() {
+            clearInterval(autoSlideInterval);
+            startAutoSlide();
+        }
+
+        async function rsvp(status) {
+            if (!currentGuest) return;
+            
+            try {
+                const response = await fetch('/api/rsvp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: currentGuest.phone, 
+                        status: status 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentGuest.rsvp_status = status;
+                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+                    updateRSVPStatus();
+                    
+                    if (status === 'accepted') {
+                        showConfetti();
+                        alert("🎉 Thank you! We can't wait to celebrate with you!");
+                    } else {
+                        alert("💔 We'll miss you, but we understand!");
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to save RSVP');
+                }
+            } catch (error) {
+                console.warn('RSVP API failed, using offline mode:', error);
+                
+                currentGuest.rsvp_status = status;
+                sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
+                updateRSVPStatus();
+                
+                if (status === 'accepted') {
+                    showConfetti();
+                    alert("🎉 Thank you! (Saved locally - will sync when online)");
+                } else {
+                    alert("💔 We'll miss you! (Saved locally - will sync when online)");
+                }
+            }
+        }
+
+        function updateRSVPStatus() {
+            const statusDiv = document.getElementById('rsvpStatus');
+            const status = currentGuest?.rsvp_status;
+            
+            if (status === 'accepted') {
+                statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
+                statusDiv.style.color = 'var(--gold)';
+            } else if (status === 'declined') {
+                statusDiv.innerHTML = '❌ You\'ll be missed!';
+                statusDiv.style.color = 'var(--rose)';
+            } else {
+                statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
+                statusDiv.style.color = 'var(--burgundy)';
+            }
+        }
+
+        function showConfetti() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => createConfetti(), i * 100);
+            }
+        }
+
+        function createConfetti() {
+            const emojis = ['🎉', '🎊', '✨', '💫', '🌟', '💍', '💕'];
+            const confetti = document.createElement('div');
+            
+            confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            confetti.style.cssText = `
+                position: fixed;
+                left: ${Math.random() * 100}vw;
+                top: -10px;
+                font-size: ${15 + Math.random() * 25}px;
+                pointer-events: none;
+                z-index: 9999;
+                animation: fall ${3 + Math.random() * 2}s linear forwards;
+            `;
+            
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 6000);
+        }
+
+        function startFloatingHearts() {
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = Math.random() > 0.5 ? '💕' : '💖';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.fontSize = (15 + Math.random() * 20) + 'px';
+                heart.style.animationDuration = (4 + Math.random() * 3) + 's';
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 8000);
+            }, 2000);
+        }
+
+        function playWeddingMusic() {
+            const audio = document.getElementById('weddingMusic');
+            audio.volume = 0.3;
+            audio.play().catch(() => {
+                const musicBtn = document.createElement('button');
+                musicBtn.textContent = '🎵 Enable Music';
+                musicBtn.style.cssText = `
+                    position: fixed; top: 70px; right: 20px; 
+                    background: var(--gold); color: white; 
+                    border: none; padding: 0.5rem 1rem; 
+                    border-radius: 20px; z-index: 1000; cursor: pointer;
+                `;
+                musicBtn.onclick = () => {
+                    audio.play();
+                    musicBtn.remove();
+                };
+                document.body.appendChild(musicBtn);
+            });
+        }
+
+        function logout() {
+            sessionStorage.removeItem('currentGuest');
+            window.location.href = 'index.html';
+        }
+
+        // FIXED: Simplified initialization without complex detection
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Check for guest data
+            const guestData = sessionStorage.getItem('currentGuest');
+            if (!guestData) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentGuest = JSON.parse(guestData);
+            document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
+            
+            // Quick connection detection (simplified)
+            updateLoadingStatus('Preparing your experience...');
+            updateLoadingProgress(10);
+            
+            // Simple connection check
+            if ('connection' in navigator) {
+                const conn = navigator.connection;
+                if (conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') {
+                    loadingStrategy = 'conservative';
+                    updateLoadingStatus('Optimizing for your connection...');
+                } else {
+                    loadingStrategy = 'adaptive';
+                    updateLoadingStatus('Loading beautiful memories...');
+                }
+            }
+            
+            // Initialize features
+            setTimeout(() => {
+                initializeCarousel();
+                updateLoadingProgress(30);
+            }, 500);
+            
+            setTimeout(() => {
+                updateRSVPStatus();
+                updateLoadingProgress(50);
+            }, 800);
+            
+            setTimeout(() => {
+                playWeddingMusic();
+                startFloatingHearts();
+                updateLoadingProgress(70);
+            }, 1200);
+        });
+
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(autoSlideInterval);
+            } else {
+                restartAutoSlide();
+                if (loadedImages < totalImages) {
+                    setTimeout(() => loadAllSlides(), 1000);
+                }
+            }
+        });
+
+        const container = document.querySelector('.carousel-container');
+        if (container) {
+            container.addEventListener('mouseenter', () => {
+                clearInterval(autoSlideInterval);
+            });
+            container.addEventListener('mouseleave', () => restartAutoSlide());
+        }
+
+        // Add confetti animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to { 
+                    transform: translateY(110vh) rotate(720deg); 
+                    opacity: 0; 
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        window.addEventListener('beforeunload', () => {
+            clearInterval(autoSlideInterval);
+            imageCache.clear();
+        });
