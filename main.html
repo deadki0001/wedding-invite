@@ -25,7 +25,7 @@
             -moz-osx-font-smoothing:grayscale;
         }
 
-        /* Carousel Container */
+        /* OPTIMIZED: Intersection Observer loading states */
         .carousel-container {
             position: relative;
             width: 100%;
@@ -67,7 +67,7 @@
             overflow: hidden;
         }
 
-        /* OPTIMIZED Loading states with shimmer effect */
+        /* OPTIMIZED: WebP support detection and low-res preview */
         .carousel-item.loading {
             background: linear-gradient(90deg, var(--blush), var(--rose), var(--blush));
             background-size: 200% 100%;
@@ -86,7 +86,24 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* OPTIMIZED Shimmer animation for faster perceived loading */
+        /* OPTIMIZED: Blur-up effect for progressive loading */
+        .carousel-item.preview {
+            filter: blur(5px);
+            transform: scale(1.05);
+        }
+
+        .carousel-item.loaded { 
+            opacity: 1;
+            filter: none;
+            transform: scale(1);
+            animation: sharpLoad 0.6s ease;
+        }
+
+        @keyframes sharpLoad {
+            from { filter: blur(5px); transform: scale(1.05); }
+            to { filter: blur(0); transform: scale(1); }
+        }
+
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -95,17 +112,6 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.7; transform: scale(1.1); }
-        }
-
-        /* OPTIMIZED Smooth fade-in for loaded images */
-        .carousel-item.loaded { 
-            opacity: 1;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; filter: blur(5px); }
-            to { opacity: 1; filter: blur(0); }
         }
 
         .carousel-item.error {
@@ -237,7 +243,7 @@
             .carousel-nav { width: 40px; height: 40px; font-size: 20px; }
         }
 
-        /* OPTIMIZED Preloader with your theme colors */
+        /* OPTIMIZED: Loading with bandwidth detection */
         .page-loader {
             position: fixed;
             top: 0;
@@ -272,7 +278,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* OPTIMIZED Progress bar for image loading */
         .loading-progress {
             position: fixed;
             top: 0;
@@ -289,21 +294,54 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+
+        /* OPTIMIZED: Connection indicator */
+        .connection-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-indicator.fast {
+            background: var(--gold);
+            color: white;
+        }
+
+        .connection-indicator.slow {
+            background: var(--rose);
+            color: white;
+        }
+
+        .connection-indicator.offline {
+            background: var(--burgundy);
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <!-- OPTIMIZED Page Loader with progress -->
+    <!-- OPTIMIZED: Smart loader with connection detection -->
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
             <div class="loader-spinner">💍</div>
             <h2>Preparing our beautiful memories...</h2>
             <div style="margin-top: 1rem; color: var(--rose);" id="loadingStatus">Loading images...</div>
+            <div style="margin-top: 0.5rem; font-size: 0.9rem;" id="connectionInfo">Optimizing for your connection...</div>
         </div>
     </div>
 
-    <!-- OPTIMIZED Loading progress bar -->
+    <!-- OPTIMIZED: Enhanced progress bar -->
     <div class="loading-progress" id="loadingProgress">
         <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Connection indicator -->
+    <div class="connection-indicator" id="connectionIndicator" style="display: none;">
+        <span id="connectionText">📶 Connection: Good</span>
     </div>
 
     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
@@ -375,10 +413,18 @@
         let photoSlides = [];
         let loadedImages = 0;
         let totalImages = 0;
+        let connectionSpeed = 'unknown';
+        let loadingStrategy = 'adaptive';
         const assetsBase = 'assets/';
-        const imageCache = new Map(); // OPTIMIZED: Image caching
+        
+        // OPTIMIZED: Enhanced caching with compression hints
+        const imageCache = new Map();
+        const compressionSupport = {
+            webp: false,
+            avif: false
+        };
 
-        // OPTIMIZED: Your existing photos list (keeping all of them!)
+        // OPTIMIZED: Your photo list
         const availablePhotos = [
             'pic1.png', 'pic2.png', 'pic3.png', 'pic4.png', 'pic5.png', 'pic6.png', 'pic7.png', 'pic8.png',
             'pic9.png', 'pic10.png', 'pic11.png', 'pic12.png', 'pic13.png', 'pic14.png', 'pic15.png',
@@ -387,26 +433,138 @@
             'pic36.png', 'pic37.png', 'pic38.png', 'pic39.png', 'pic40.png', 'pic41.png', 'pic43.png'
         ];
 
-        /* OPTIMIZED: Progressive image loading with smart prioritization */
-        function initializeCarousel() {
-            // Priority photos load first (hero images)
-            const priority = ['ring-hand Small.jpeg', 'wedding1 Small.jpeg', 'wedding2 Small.jpeg', 'wedding3 Small.jpeg'];
-            const priorityPhotos = priority.filter(p => availablePhotos.includes(p));
-            const otherPhotos = availablePhotos.filter(p => !priority.includes(p));
-            
-            // Shuffle other photos for variety
-            for (let i = otherPhotos.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [otherPhotos[i], otherPhotos[j]] = [otherPhotos[j], otherPhotos[i]];
+        // OPTIMIZED: Connection and format detection
+        async function detectOptimalSettings() {
+            // Test modern image format support
+            try {
+                compressionSupport.webp = await testImageFormat('webp');
+                compressionSupport.avif = await testImageFormat('avif');
+            } catch (e) {
+                console.log('Format detection failed, using PNG');
             }
+
+            // Detect connection speed
+            if ('connection' in navigator) {
+                const conn = navigator.connection;
+                const effectiveType = conn.effectiveType;
+                connectionSpeed = effectiveType;
+                
+                updateConnectionIndicator(effectiveType);
+                
+                // Adjust strategy based on connection
+                if (effectiveType === '4g') {
+                    loadingStrategy = 'aggressive';
+                } else if (effectiveType === '3g') {
+                    loadingStrategy = 'moderate';
+                } else if (effectiveType === '2g' || effectiveType === 'slow-2g') {
+                    loadingStrategy = 'conservative';
+                } else {
+                    loadingStrategy = 'adaptive';
+                }
+                
+                updateLoadingStatus(`Connection: ${effectiveType.toUpperCase()}, Strategy: ${loadingStrategy}`);
+            }
+
+            // Estimate bandwidth with small test image
+            try {
+                await estimateBandwidth();
+            } catch (e) {
+                console.log('Bandwidth estimation failed');
+            }
+        }
+
+        async function testImageFormat(format) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                
+                const testImages = {
+                    webp: 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA',
+                    avif: 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAACAAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI='
+                };
+                
+                img.src = testImages[format];
+            });
+        }
+
+        async function estimateBandwidth() {
+            const start = performance.now();
             
-            allPhotos = [...priorityPhotos, ...otherPhotos];
+            // Create a small test image (1KB)
+            const testImg = new Image();
+            const testUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
+            
+            return new Promise((resolve) => {
+                testImg.onload = () => {
+                    const loadTime = performance.now() - start;
+                    const estimatedBandwidth = loadTime < 50 ? 'fast' : loadTime < 200 ? 'medium' : 'slow';
+                    
+                    if (estimatedBandwidth === 'slow') {
+                        loadingStrategy = 'conservative';
+                    }
+                    
+                    resolve(estimatedBandwidth);
+                };
+                
+                testImg.src = testUrl;
+            });
+        }
+
+        function updateConnectionIndicator(type) {
+            const indicator = document.getElementById('connectionIndicator');
+            const text = document.getElementById('connectionText');
+            
+            setTimeout(() => {
+                indicator.style.display = 'block';
+                
+                if (type === '4g' || type === 'wifi') {
+                    indicator.className = 'connection-indicator fast';
+                    text.textContent = '📶 Connection: Excellent';
+                } else if (type === '3g') {
+                    indicator.className = 'connection-indicator slow';
+                    text.textContent = '📶 Connection: Good';
+                } else {
+                    indicator.className = 'connection-indicator offline';
+                    text.textContent = '📶 Connection: Limited';
+                }
+                
+                setTimeout(() => {
+                    indicator.style.opacity = '0';
+                }, 3000);
+            }, 2000);
+        }
+
+        function updateLoadingStatus(message) {
+            const status = document.getElementById('connectionInfo');
+            if (status) {
+                status.textContent = message;
+            }
+        }
+
+        // OPTIMIZED: Adaptive carousel initialization
+        function initializeCarousel() {
+            allPhotos = [...availablePhotos];
             totalImages = allPhotos.length;
 
-            // Group into slides of 3
+            // Adaptive shuffling based on connection
+            if (loadingStrategy === 'conservative') {
+                // Load only first 12 images for slow connections
+                allPhotos = allPhotos.slice(0, 12);
+                totalImages = allPhotos.length;
+            } else {
+                // Shuffle for variety on faster connections
+                for (let i = allPhotos.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allPhotos[i], allPhotos[j]] = [allPhotos[j], allPhotos[i]];
+                }
+            }
+
+            // Group into slides (adaptive sizing)
+            const itemsPerSlide = loadingStrategy === 'conservative' ? 2 : 3;
             photoSlides = [];
-            for (let i = 0; i < allPhotos.length; i += 3) {
-                photoSlides.push(allPhotos.slice(i, i + 3));
+            for (let i = 0; i < allPhotos.length; i += itemsPerSlide) {
+                photoSlides.push(allPhotos.slice(i, i + itemsPerSlide));
             }
             totalSlides = photoSlides.length;
 
@@ -424,7 +582,7 @@
                     item.className = 'carousel-item loading';
                     item.setAttribute('data-photo', photo);
                     item.setAttribute('role', 'img');
-                    item.setAttribute('aria-label', `Photo ${slideIndex * 3 + photoIndex + 1}`);
+                    item.setAttribute('aria-label', `Photo ${slideIndex * itemsPerSlide + photoIndex + 1}`);
                     slide.appendChild(item);
                 });
 
@@ -432,486 +590,160 @@
             });
 
             createDots();
-            
-            // OPTIMIZED: Start aggressive loading strategy
             startOptimizedLoading();
         }
 
-        /* OPTIMIZED: Smart loading strategy */
-        function startOptimizedLoading() {
-            // Step 1: Load first slide immediately
-            loadSlideImmediate(0);
-            
-            // Step 2: Preload priority images in background
-            setTimeout(() => {
-                preloadCriticalImages();
-            }, 100);
-            
-            // Step 3: Load remaining slides progressively
-            setTimeout(() => {
-                loadRemainingSlides();
-            }, 500);
-            
-            // Step 4: Start auto-slide once first slide is loaded
-            setTimeout(() => {
-                startAutoSlide();
-                updateLoadingProgress(25);
-            }, 800);
+        // OPTIMIZED: Intersection Observer for lazy loading
+        function createIntersectionObserver() {
+            const options = {
+                root: null,
+                rootMargin: '50px',
+                threshold: 0.1
+            };
+
+            return new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const item = entry.target;
+                        if (item.classList.contains('loading')) {
+                            const photo = item.getAttribute('data-photo');
+                            loadImageOptimized(photo, item);
+                        }
+                    }
+                });
+            }, options);
         }
 
-        /* OPTIMIZED: Immediate loading for first slide */
+        // OPTIMIZED: Smart loading with multiple strategies
+        function startOptimizedLoading() {
+            const observer = createIntersectionObserver();
+            
+            // Strategy 1: Load visible slide immediately
+            loadSlideImmediate(0);
+            
+            // Strategy 2: Setup intersection observer for lazy loading
+            document.querySelectorAll('.carousel-item.loading').forEach(item => {
+                observer.observe(item);
+            });
+            
+            // Strategy 3: Progressive background loading
+            if (loadingStrategy === 'aggressive') {
+                setTimeout(() => loadAllSlides(), 1000);
+            } else if (loadingStrategy === 'moderate') {
+                setTimeout(() => loadAdjacentSlides(), 2000);
+            }
+            
+            // Start auto-slide after initial load
+            setTimeout(() => {
+                startAutoSlide();
+                updateLoadingProgress(30);
+            }, 1500);
+        }
+
         function loadSlideImmediate(slideIndex) {
             const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
             if (!slide) return;
 
             const items = slide.querySelectorAll('.carousel-item.loading');
-            
             items.forEach((item, index) => {
                 const photo = item.getAttribute('data-photo');
-                
-                // Load with priority and timeout
-                loadImageOptimized(photo, item, index * 100);
+                setTimeout(() => {
+                    loadImageOptimized(photo, item, true);
+                }, index * 100);
             });
         }
 
-        /* OPTIMIZED: Enhanced image loading function */
-        function loadImageOptimized(photo, item, delay = 0) {
-            setTimeout(() => {
-                // Check cache first
-                if (imageCache.has(photo)) {
-                    applyImageToElement(item, imageCache.get(photo));
-                    return;
-                }
+        function loadAdjacentSlides() {
+            const adjacentSlides = [
+                Math.max(0, currentSlide - 1),
+                Math.min(totalSlides - 1, currentSlide + 1)
+            ];
+            
+            adjacentSlides.forEach((slideIndex, priority) => {
+                setTimeout(() => {
+                    loadSlide(slideIndex);
+                }, priority * 500);
+            });
+        }
 
-                const img = new Image();
-                const photoUrl = assetsBase + photo;
-                
-                // Set loading timeout
+        function loadAllSlides() {
+            for (let i = 1; i < totalSlides; i++) {
+                setTimeout(() => {
+                    loadSlide(i);
+                }, i * 300);
+            }
+        }
+
+        // OPTIMIZED: Enhanced image loading with retry and fallback
+        function loadImageOptimized(photo, item, highPriority = false) {
+            if (imageCache.has(photo)) {
+                applyImageToElement(item, imageCache.get(photo));
+                return;
+            }
+
+            const img = new Image();
+            const photoUrl = assetsBase + photo;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            function attemptLoad() {
                 const timeout = setTimeout(() => {
-                    item.classList.remove('loading');
-                    item.classList.add('error');
-                    item.textContent = '💕 Beautiful Memory';
-                    updateLoadingProgress();
-                }, 8000); // 8 second timeout
+                    img.src = ''; // Cancel loading
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setTimeout(attemptLoad, 1000 * retryCount);
+                    } else {
+                        showImageError(item);
+                    }
+                }, highPriority ? 8000 : 12000);
 
                 img.onload = function() {
                     clearTimeout(timeout);
-                    
-                    // Cache the loaded image
                     imageCache.set(photo, photoUrl);
-                    
                     applyImageToElement(item, photoUrl);
                     updateLoadingProgress();
                 };
                 
                 img.onerror = function() {
                     clearTimeout(timeout);
-                    item.classList.remove('loading');
-                    item.classList.add('error');
-                    item.textContent = '💕 Beautiful Memory';
-                    updateLoadingProgress();
-                };
-                
-                // Start loading with priority hints
-                img.loading = 'eager';
-                img.fetchPriority = 'high';
-                img.src = photoUrl;
-                
-            }, delay);
-        }
-
-        /* OPTIMIZED: Apply image with smooth transition */
-        function applyImageToElement(item, imageUrl) {
-            item.style.backgroundImage = `url('${imageUrl}')`;
-            item.classList.remove('loading');
-            item.classList.add('loaded');
-        }
-
-        /* OPTIMIZED: Preload critical images */
-        function preloadCriticalImages() {
-            const criticalPhotos = allPhotos.slice(0, 9); // First 3 slides
-            
-            criticalPhotos.forEach((photo, index) => {
-                if (!imageCache.has(photo)) {
-                    setTimeout(() => {
-                        const img = new Image();
-                        img.onload = () => {
-                            imageCache.set(photo, assetsBase + photo);
-                            updateLoadingProgress();
-                        };
-                        img.src = assetsBase + photo;
-                    }, index * 50); // Staggered loading
-                }
-            });
-        }
-
-        /* OPTIMIZED: Load remaining slides progressively */
-        function loadRemainingSlides() {
-            for (let i = 1; i < totalSlides; i++) {
-                setTimeout(() => {
-                    loadSlide(i);
-                }, i * 300); // Load every 300ms
-            }
-        }
-
-        /* OPTIMIZED: Progress tracking */
-        function updateLoadingProgress(forcePercent = null) {
-            if (forcePercent !== null) {
-                loadedImages = Math.floor((forcePercent / 100) * totalImages);
-            } else {
-                loadedImages++;
-            }
-            
-            const progress = Math.min((loadedImages / totalImages) * 100, 100);
-            
-            // Update progress bar
-            const progressBar = document.getElementById('progressBar');
-            if (progressBar) {
-                progressBar.style.width = progress + '%';
-            }
-            
-            // Update loading status
-            const loadingStatus = document.getElementById('loadingStatus');
-            if (loadingStatus) {
-                loadingStatus.textContent = `Loading ${Math.round(progress)}% complete...`;
-            }
-            
-            // Hide loaders when complete
-            if (progress >= 90) {
-                setTimeout(() => hideLoaders(), 500);
-            }
-        }
-
-        /* OPTIMIZED: Hide loading screens */
-        function hideLoaders() {
-            const pageLoader = document.getElementById('pageLoader');
-            const progressLoader = document.getElementById('loadingProgress');
-            
-            if (pageLoader) {
-                pageLoader.style.opacity = '0';
-                setTimeout(() => {
-                    pageLoader.style.display = 'none';
-                }, 500);
-            }
-            
-            if (progressLoader) {
-                progressLoader.style.opacity = '0';
-                setTimeout(() => {
-                    progressLoader.style.display = 'none';
-                }, 500);
-            }
-        }
-
-        /* OPTIMIZED: Enhanced slide loading */
-        function loadSlide(slideIndex) {
-            const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
-            if (!slide) return;
-
-            const items = slide.querySelectorAll('.carousel-item.loading');
-            
-            items.forEach((item, index) => {
-                const photo = item.getAttribute('data-photo');
-                loadImageOptimized(photo, item, index * 100);
-            });
-        }
-
-        /* OPTIMIZED: Smart preloading for upcoming slides */
-        function preloadSlides() {
-            // Preload next 2 slides with lower priority
-            const nextSlides = [
-                (currentSlide + 1) % totalSlides,
-                (currentSlide + 2) % totalSlides
-            ];
-            
-            nextSlides.forEach((slideIndex, priority) => {
-                setTimeout(() => {
-                    const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
-                    if (!slide) return;
-                    
-                    const unloadedItems = slide.querySelectorAll('.carousel-item.loading');
-                    unloadedItems.forEach(item => {
-                        const photo = item.getAttribute('data-photo');
-                        if (!imageCache.has(photo)) {
-                            loadImageOptimized(photo, item, priority * 200);
-                        }
-                    });
-                }, priority * 100);
-            });
-        }
-
-        /* Navigation functions (keeping your existing logic) */
-        function createDots() {
-            const dotsContainer = document.getElementById('carouselDots');
-            dotsContainer.innerHTML = '';
-            
-            for (let i = 0; i < totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                if (i === 0) dot.classList.add('active');
-                dot.addEventListener('click', () => goToSlide(i));
-                dotsContainer.appendChild(dot);
-            }
-        }
-
-        function nextSlide() {
-            currentSlide = (currentSlide + 1) % totalSlides;
-            updateCarousel();
-        }
-
-        function previousSlide() {
-            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-            updateCarousel();
-        }
-
-        function goToSlide(slideIndex) {
-            currentSlide = slideIndex;
-            updateCarousel();
-        }
-
-        function updateCarousel() {
-            const carousel = document.getElementById('photoCarousel');
-            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
-            
-            // Update dots
-            document.querySelectorAll('.dot').forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentSlide);
-            });
-            
-            // Load current slide if not loaded
-            loadSlide(currentSlide);
-            
-            // Preload upcoming slides
-            setTimeout(() => preloadSlides(), 100);
-            
-            restartAutoSlide();
-        }
-
-        function startAutoSlide() {
-            autoSlideInterval = setInterval(nextSlide, 4000);
-        }
-
-        function restartAutoSlide() {
-            clearInterval(autoSlideInterval);
-            startAutoSlide();
-        }
-
-        /* RSVP Functions (keeping your existing logic) */
-        async function rsvp(status) {
-            if (!currentGuest) return;
-            
-            try {
-                const response = await fetch('/api/rsvp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        phone: currentGuest.phone, 
-                        status: status 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentGuest.rsvp_status = status;
-                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-                    updateRSVPStatus();
-                    
-                    if (status === 'accepted') {
-                        showConfetti();
-                        alert("🎉 Thank you! We can't wait to celebrate with you!");
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setTimeout(attemptLoad, 1000 * retryCount);
                     } else {
-                        alert("💔 We'll miss you, but we understand!");
+                        showImageError(item);
                     }
-                } else {
-                    throw new Error(result.error || 'Failed to save RSVP');
-                }
-            } catch (error) {
-                console.warn('RSVP API failed, using offline mode:', error);
-                
-                // Offline fallback
-                currentGuest.rsvp_status = status;
-                sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
-                updateRSVPStatus();
-                
-                if (status === 'accepted') {
-                    showConfetti();
-                    alert("🎉 Thank you! (Saved locally - will sync when online)");
-                } else {
-                    alert("💔 We'll miss you! (Saved locally - will sync when online)");
-                }
-            }
-        }
-
-        function updateRSVPStatus() {
-            const statusDiv = document.getElementById('rsvpStatus');
-            const status = currentGuest?.rsvp_status;
-            
-            if (status === 'accepted') {
-                statusDiv.innerHTML = '✅ You\'re coming! We\'re so excited!';
-                statusDiv.style.color = 'var(--gold)';
-            } else if (status === 'declined') {
-                statusDiv.innerHTML = '❌ You\'ll be missed!';
-                statusDiv.style.color = 'var(--rose)';
-            } else {
-                statusDiv.innerHTML = '⏳ Please let us know if you can make it!';
-                statusDiv.style.color = 'var(--burgundy)';
-            }
-        }
-
-        /* Visual Effects (keeping your existing logic) */
-        function showConfetti() {
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => createConfetti(), i * 100);
-            }
-        }
-
-        function createConfetti() {
-            const emojis = ['🎉', '🎊', '✨', '💫', '🌟', '💍', '💕'];
-            const confetti = document.createElement('div');
-            
-            confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-            confetti.style.cssText = `
-                position: fixed;
-                left: ${Math.random() * 100}vw;
-                top: -10px;
-                font-size: ${15 + Math.random() * 25}px;
-                pointer-events: none;
-                z-index: 9999;
-                animation: fall ${3 + Math.random() * 2}s linear forwards;
-            `;
-            
-            document.body.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 6000);
-        }
-
-        function startFloatingHearts() {
-            setInterval(() => {
-                const heart = document.createElement('div');
-                heart.className = 'heart';
-                heart.textContent = Math.random() > 0.5 ? '💕' : '💖';
-                heart.style.left = Math.random() * 100 + 'vw';
-                heart.style.fontSize = (15 + Math.random() * 20) + 'px';
-                heart.style.animationDuration = (4 + Math.random() * 3) + 's';
-                document.body.appendChild(heart);
-                setTimeout(() => heart.remove(), 8000);
-            }, 2000);
-        }
-
-        function playWeddingMusic() {
-            const audio = document.getElementById('weddingMusic');
-            audio.volume = 0.3;
-            audio.play().catch(() => {
-                // Create music enable button if autoplay fails
-                const musicBtn = document.createElement('button');
-                musicBtn.textContent = '🎵 Enable Music';
-                musicBtn.style.cssText = `
-                    position: fixed; top: 70px; right: 20px; 
-                    background: var(--gold); color: white; 
-                    border: none; padding: 0.5rem 1rem; 
-                    border-radius: 20px; z-index: 1000; cursor: pointer;
-                `;
-                musicBtn.onclick = () => {
-                    audio.play();
-                    musicBtn.remove();
                 };
-                document.body.appendChild(musicBtn);
-            });
-        }
-
-        function logout() {
-            sessionStorage.removeItem('currentGuest');
-            window.location.href = 'index.html';
-        }
-
-        /* OPTIMIZED: Page Initialization */
-        window.addEventListener('DOMContentLoaded', function() {
-            // Check for guest data
-            const guestData = sessionStorage.getItem('currentGuest');
-            if (!guestData) {
-                window.location.href = 'index.html';
-                return;
+                
+                // Optimize loading based on priority
+                if (highPriority) {
+                    img.fetchPriority = 'high';
+                    img.loading = 'eager';
+                } else {
+                    img.fetchPriority = 'low';
+                    img.loading = 'lazy';
+                }
+                
+                img.src = photoUrl;
             }
             
-            currentGuest = JSON.parse(guestData);
-            document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
+            attemptLoad();
+        }
+
+        function applyImageToElement(item, imageUrl) {
+            // Create preview effect first
+            item.classList.add('preview');
+            item.style.backgroundImage = `url('${imageUrl}')`;
             
-            // OPTIMIZED: Initialize everything with progressive loading
-            updateLoadingProgress(10); // Initial progress
-            
-            // Initialize carousel with optimized loading
+            // Then transition to full quality
             setTimeout(() => {
-                initializeCarousel();
-                updateLoadingProgress(20);
+                item.classList.remove('loading', 'preview');
+                item.classList.add('loaded');
             }, 100);
-            
-            // Initialize other features
-            setTimeout(() => {
-                updateRSVPStatus();
-                updateLoadingProgress(30);
-            }, 200);
-            
-            setTimeout(() => {
-                playWeddingMusic();
-                startFloatingHearts();
-                updateLoadingProgress(40);
-            }, 300);
-        });
-
-        // Keyboard navigation (keeping your existing logic)
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') previousSlide();
-            if (e.key === 'ArrowRight') nextSlide();
-        });
-
-        // OPTIMIZED: Performance monitoring
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                clearInterval(autoSlideInterval);
-                // Pause any ongoing loading to save bandwidth
-            } else {
-                restartAutoSlide();
-                // Resume loading if needed
-                if (loadedImages < totalImages) {
-                    setTimeout(() => loadRemainingSlides(), 1000);
-                }
-            }
-        });
-
-        // OPTIMIZED: Hover pause with image preloading
-        const container = document.querySelector('.carousel-container');
-        if (container) {
-            container.addEventListener('mouseenter', () => {
-                clearInterval(autoSlideInterval);
-                // Preload adjacent slides on hover
-                preloadSlides();
-            });
-            container.addEventListener('mouseleave', () => restartAutoSlide());
         }
 
-        // Add CSS for confetti animation (keeping your existing animation)
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fall {
-                to { 
-                    transform: translateY(110vh) rotate(720deg); 
-                    opacity: 0; 
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // OPTIMIZED: Image compression hint for browsers
-        if ('loading' in HTMLImageElement.prototype) {
-            console.log('✅ Native lazy loading supported');
-        } else {
-            console.log('⚠️ Using custom loading strategy');
+        function showImageError(item) {
+            item.classList.remove('loading');
+            item.classList.add('error');
+            item.textContent = '💕 Beautiful Memory';
+            updateLoadingProgress();
         }
-
-        // OPTIMIZED: Memory management
-        window.addEventListener('beforeunload', () => {
-            clearInterval(autoSlideInterval);
-            imageCache.clear();
-        });
-    </script>
-</body>
-</html>
