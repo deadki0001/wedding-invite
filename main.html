@@ -25,7 +25,7 @@
             -moz-osx-font-smoothing:grayscale;
         }
 
-        /* OPTIMIZED: Intersection Observer loading states */
+        /* Carousel Container */
         .carousel-container {
             position: relative;
             width: 100%;
@@ -67,7 +67,6 @@
             overflow: hidden;
         }
 
-        /* OPTIMIZED: WebP support detection and low-res preview */
         .carousel-item.loading {
             background: linear-gradient(90deg, var(--blush), var(--rose), var(--blush));
             background-size: 200% 100%;
@@ -86,24 +85,6 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* OPTIMIZED: Blur-up effect for progressive loading */
-        .carousel-item.preview {
-            filter: blur(5px);
-            transform: scale(1.05);
-        }
-
-        .carousel-item.loaded { 
-            opacity: 1;
-            filter: none;
-            transform: scale(1);
-            animation: sharpLoad 0.6s ease;
-        }
-
-        @keyframes sharpLoad {
-            from { filter: blur(5px); transform: scale(1.05); }
-            to { filter: blur(0); transform: scale(1); }
-        }
-
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -112,6 +93,16 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .carousel-item.loaded { 
+            opacity: 1;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; filter: blur(5px); }
+            to { opacity: 1; filter: blur(0); }
         }
 
         .carousel-item.error {
@@ -243,7 +234,7 @@
             .carousel-nav { width: 40px; height: 40px; font-size: 20px; }
         }
 
-        /* OPTIMIZED: Loading with bandwidth detection */
+        /* Simple loader */
         .page-loader {
             position: fixed;
             top: 0;
@@ -277,71 +268,15 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
-        .loading-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--blush);
-            z-index: 9998;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--gold), var(--rose));
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* OPTIMIZED: Connection indicator */
-        .connection-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .connection-indicator.fast {
-            background: var(--gold);
-            color: white;
-        }
-
-        .connection-indicator.slow {
-            background: var(--rose);
-            color: white;
-        }
-
-        .connection-indicator.offline {
-            background: var(--burgundy);
-            color: white;
-        }
     </style>
 </head>
 <body>
-    <!-- OPTIMIZED: Smart loader with connection detection -->
+    <!-- Simple Page Loader -->
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
             <div class="loader-spinner">💍</div>
-            <h2>Preparing our beautiful memories...</h2>
-            <div style="margin-top: 1rem; color: var(--rose);" id="loadingStatus">Loading images...</div>
-            <div style="margin-top: 0.5rem; font-size: 0.9rem;" id="connectionInfo">Optimizing for your connection...</div>
+            <h2>Welcome to our special day!</h2>
         </div>
-    </div>
-
-    <!-- OPTIMIZED: Enhanced progress bar -->
-    <div class="loading-progress" id="loadingProgress">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <!-- Connection indicator -->
-    <div class="connection-indicator" id="connectionIndicator" style="display: none;">
-        <span id="connectionText">📶 Connection: Good</span>
     </div>
 
     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
@@ -413,18 +348,10 @@
         let photoSlides = [];
         let loadedImages = 0;
         let totalImages = 0;
-        let connectionSpeed = 'unknown';
-        let loadingStrategy = 'adaptive';
         const assetsBase = 'assets/';
-        
-        // OPTIMIZED: Enhanced caching with compression hints
         const imageCache = new Map();
-        const compressionSupport = {
-            webp: false,
-            avif: false
-        };
 
-        // OPTIMIZED: Your photo list
+        // Your photo list
         const availablePhotos = [
             'pic1.png', 'pic2.png', 'pic3.png', 'pic4.png', 'pic5.png', 'pic6.png', 'pic7.png', 'pic8.png',
             'pic9.png', 'pic10.png', 'pic11.png', 'pic12.png', 'pic13.png', 'pic14.png', 'pic15.png',
@@ -433,138 +360,20 @@
             'pic36.png', 'pic37.png', 'pic38.png', 'pic39.png', 'pic40.png', 'pic41.png', 'pic43.png'
         ];
 
-        // OPTIMIZED: Connection and format detection
-        async function detectOptimalSettings() {
-            // Test modern image format support
-            try {
-                compressionSupport.webp = await testImageFormat('webp');
-                compressionSupport.avif = await testImageFormat('avif');
-            } catch (e) {
-                console.log('Format detection failed, using PNG');
-            }
-
-            // Detect connection speed
-            if ('connection' in navigator) {
-                const conn = navigator.connection;
-                const effectiveType = conn.effectiveType;
-                connectionSpeed = effectiveType;
-                
-                updateConnectionIndicator(effectiveType);
-                
-                // Adjust strategy based on connection
-                if (effectiveType === '4g') {
-                    loadingStrategy = 'aggressive';
-                } else if (effectiveType === '3g') {
-                    loadingStrategy = 'moderate';
-                } else if (effectiveType === '2g' || effectiveType === 'slow-2g') {
-                    loadingStrategy = 'conservative';
-                } else {
-                    loadingStrategy = 'adaptive';
-                }
-                
-                updateLoadingStatus(`Connection: ${effectiveType.toUpperCase()}, Strategy: ${loadingStrategy}`);
-            }
-
-            // Estimate bandwidth with small test image
-            try {
-                await estimateBandwidth();
-            } catch (e) {
-                console.log('Bandwidth estimation failed');
-            }
-        }
-
-        async function testImageFormat(format) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                
-                const testImages = {
-                    webp: 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA',
-                    avif: 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAACAAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI='
-                };
-                
-                img.src = testImages[format];
-            });
-        }
-
-        async function estimateBandwidth() {
-            const start = performance.now();
-            
-            // Create a small test image (1KB)
-            const testImg = new Image();
-            const testUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
-            
-            return new Promise((resolve) => {
-                testImg.onload = () => {
-                    const loadTime = performance.now() - start;
-                    const estimatedBandwidth = loadTime < 50 ? 'fast' : loadTime < 200 ? 'medium' : 'slow';
-                    
-                    if (estimatedBandwidth === 'slow') {
-                        loadingStrategy = 'conservative';
-                    }
-                    
-                    resolve(estimatedBandwidth);
-                };
-                
-                testImg.src = testUrl;
-            });
-        }
-
-        function updateConnectionIndicator(type) {
-            const indicator = document.getElementById('connectionIndicator');
-            const text = document.getElementById('connectionText');
-            
-            setTimeout(() => {
-                indicator.style.display = 'block';
-                
-                if (type === '4g' || type === 'wifi') {
-                    indicator.className = 'connection-indicator fast';
-                    text.textContent = '📶 Connection: Excellent';
-                } else if (type === '3g') {
-                    indicator.className = 'connection-indicator slow';
-                    text.textContent = '📶 Connection: Good';
-                } else {
-                    indicator.className = 'connection-indicator offline';
-                    text.textContent = '📶 Connection: Limited';
-                }
-                
-                setTimeout(() => {
-                    indicator.style.opacity = '0';
-                }, 3000);
-            }, 2000);
-        }
-
-        function updateLoadingStatus(message) {
-            const status = document.getElementById('connectionInfo');
-            if (status) {
-                status.textContent = message;
-            }
-        }
-
-        // OPTIMIZED: Adaptive carousel initialization
         function initializeCarousel() {
+            // Shuffle photos for variety
             allPhotos = [...availablePhotos];
+            for (let i = allPhotos.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allPhotos[i], allPhotos[j]] = [allPhotos[j], allPhotos[i]];
+            }
+            
             totalImages = allPhotos.length;
 
-            // Adaptive shuffling based on connection
-            if (loadingStrategy === 'conservative') {
-                // Load only first 12 images for slow connections
-                allPhotos = allPhotos.slice(0, 12);
-                totalImages = allPhotos.length;
-            } else {
-                // Shuffle for variety on faster connections
-                for (let i = allPhotos.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allPhotos[i], allPhotos[j]] = [allPhotos[j], allPhotos[i]];
-                }
-            }
-
-            // Group into slides (adaptive sizing)
-            const itemsPerSlide = loadingStrategy === 'conservative' ? 2 : 3;
+            // Group into slides of 3
             photoSlides = [];
-            for (let i = 0; i < allPhotos.length; i += itemsPerSlide) {
-                photoSlides.push(allPhotos.slice(i, i + itemsPerSlide));
+            for (let i = 0; i < allPhotos.length; i += 3) {
+                photoSlides.push(allPhotos.slice(i, i + 3));
             }
             totalSlides = photoSlides.length;
 
@@ -582,7 +391,7 @@
                     item.className = 'carousel-item loading';
                     item.setAttribute('data-photo', photo);
                     item.setAttribute('role', 'img');
-                    item.setAttribute('aria-label', `Photo ${slideIndex * itemsPerSlide + photoIndex + 1}`);
+                    item.setAttribute('aria-label', `Photo ${slideIndex * 3 + photoIndex + 1}`);
                     slide.appendChild(item);
                 });
 
@@ -590,162 +399,22 @@
             });
 
             createDots();
-            startOptimizedLoading();
-        }
-
-        // OPTIMIZED: Intersection Observer for lazy loading
-        function createIntersectionObserver() {
-            const options = {
-                root: null,
-                rootMargin: '50px',
-                threshold: 0.1
-            };
-
-            return new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const item = entry.target;
-                        if (item.classList.contains('loading')) {
-                            const photo = item.getAttribute('data-photo');
-                            loadImageOptimized(photo, item);
-                        }
-                    }
-                });
-            }, options);
-        }
-
-        // OPTIMIZED: Smart loading with multiple strategies
-        function startOptimizedLoading() {
-            const observer = createIntersectionObserver();
             
-            // Strategy 1: Load visible slide immediately
-            loadSlideImmediate(0);
+            // Start loading first slide immediately
+            loadSlide(0);
             
-            // Strategy 2: Setup intersection observer for lazy loading
-            document.querySelectorAll('.carousel-item.loading').forEach(item => {
-                observer.observe(item);
-            });
-            
-            // Strategy 3: Progressive background loading
-            if (loadingStrategy === 'aggressive') {
-                setTimeout(() => loadAllSlides(), 1000);
-            } else if (loadingStrategy === 'moderate') {
-                setTimeout(() => loadAdjacentSlides(), 2000);
-            }
-            
-            // Start auto-slide after initial load
+            // Hide loader and start auto-slide
             setTimeout(() => {
+                hideLoader();
                 startAutoSlide();
-                updateLoadingProgress(30);
-            }, 1500);
-        }
-
-        function loadSlideImmediate(slideIndex) {
-            const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
-            if (!slide) return;
-
-            const items = slide.querySelectorAll('.carousel-item.loading');
-            items.forEach((item, index) => {
-                const photo = item.getAttribute('data-photo');
-                setTimeout(() => {
-                    loadImageOptimized(photo, item, true);
-                }, index * 100);
-            });
-        }
-
-        function loadAdjacentSlides() {
-            const adjacentSlides = [
-                Math.max(0, currentSlide - 1),
-                Math.min(totalSlides - 1, currentSlide + 1)
-            ];
+            }, 2000);
             
-            adjacentSlides.forEach((slideIndex, priority) => {
-                setTimeout(() => {
-                    loadSlide(slideIndex);
-                }, priority * 500);
-            });
-        }
-
-        function loadAllSlides() {
-            for (let i = 1; i < totalSlides; i++) {
-                setTimeout(() => {
-                    loadSlide(i);
-                }, i * 300);
-            }
-        }
-
-        // OPTIMIZED: Enhanced image loading with retry and fallback
-        function loadImageOptimized(photo, item, highPriority = false) {
-            if (imageCache.has(photo)) {
-                applyImageToElement(item, imageCache.get(photo));
-                return;
-            }
-
-            const img = new Image();
-            const photoUrl = assetsBase + photo;
-            let retryCount = 0;
-            const maxRetries = 3;
-            
-            function attemptLoad() {
-                const timeout = setTimeout(() => {
-                    img.src = ''; // Cancel loading
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        setTimeout(attemptLoad, 1000 * retryCount);
-                    } else {
-                        showImageError(item);
-                    }
-                }, highPriority ? 8000 : 12000);
-
-                img.onload = function() {
-                    clearTimeout(timeout);
-                    imageCache.set(photo, photoUrl);
-                    applyImageToElement(item, photoUrl);
-                    updateLoadingProgress();
-                };
-                
-                img.onerror = function() {
-                    clearTimeout(timeout);
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        setTimeout(attemptLoad, 1000 * retryCount);
-                    } else {
-                        showImageError(item);
-                    }
-                };
-                
-                // Optimize loading based on priority
-                if (highPriority) {
-                    img.fetchPriority = 'high';
-                    img.loading = 'eager';
-                } else {
-                    img.fetchPriority = 'low';
-                    img.loading = 'lazy';
-                }
-                
-                img.src = photoUrl;
-            }
-            
-            attemptLoad();
-        }
-
-        function applyImageToElement(item, imageUrl) {
-            // Create preview effect first
-            item.classList.add('preview');
-            item.style.backgroundImage = `url('${imageUrl}')`;
-            
-            // Then transition to full quality
+            // Load remaining slides in background
             setTimeout(() => {
-                item.classList.remove('loading', 'preview');
-                item.classList.add('loaded');
-            }, 100);
-        }
-
-        function showImageError(item) {
-            item.classList.remove('loading');
-            item.classList.add('error');
-            item.textContent = '💕 Beautiful Memory';
-            updateLoadingProgress();
+                for (let i = 1; i < totalSlides; i++) {
+                    setTimeout(() => loadSlide(i), i * 500);
+                }
+            }, 3000);
         }
 
         function loadSlide(slideIndex) {
@@ -753,53 +422,58 @@
             if (!slide) return;
 
             const items = slide.querySelectorAll('.carousel-item.loading');
+            
             items.forEach((item, index) => {
                 const photo = item.getAttribute('data-photo');
                 setTimeout(() => {
-                    loadImageOptimized(photo, item);
-                }, index * 150);
+                    loadImage(photo, item);
+                }, index * 200);
             });
         }
 
-        function updateLoadingProgress(forcePercent = null) {
-            if (forcePercent !== null) {
-                loadedImages = Math.floor((forcePercent / 100) * totalImages);
-            } else {
-                loadedImages++;
+        function loadImage(photo, item) {
+            if (imageCache.has(photo)) {
+                applyImage(item, imageCache.get(photo));
+                return;
             }
+
+            const img = new Image();
+            const photoUrl = assetsBase + photo;
             
-            const progress = Math.min((loadedImages / totalImages) * 100, 100);
+            const timeout = setTimeout(() => {
+                item.classList.remove('loading');
+                item.classList.add('error');
+                item.textContent = '💕 Beautiful Memory';
+            }, 10000);
+
+            img.onload = function() {
+                clearTimeout(timeout);
+                imageCache.set(photo, photoUrl);
+                applyImage(item, photoUrl);
+            };
             
-            const progressBar = document.getElementById('progressBar');
-            if (progressBar) {
-                progressBar.style.width = progress + '%';
-            }
+            img.onerror = function() {
+                clearTimeout(timeout);
+                item.classList.remove('loading');
+                item.classList.add('error');
+                item.textContent = '💕 Beautiful Memory';
+            };
             
-            const loadingStatus = document.getElementById('loadingStatus');
-            if (loadingStatus) {
-                loadingStatus.textContent = `Loading ${Math.round(progress)}% complete...`;
-            }
-            
-            if (progress >= 90) {
-                setTimeout(() => hideLoaders(), 500);
-            }
+            img.src = photoUrl;
         }
 
-        function hideLoaders() {
+        function applyImage(item, imageUrl) {
+            item.style.backgroundImage = `url('${imageUrl}')`;
+            item.classList.remove('loading');
+            item.classList.add('loaded');
+        }
+
+        function hideLoader() {
             const pageLoader = document.getElementById('pageLoader');
-            const progressLoader = document.getElementById('loadingProgress');
-            
             if (pageLoader) {
                 pageLoader.style.opacity = '0';
                 setTimeout(() => {
                     pageLoader.style.display = 'none';
-                }, 500);
-            }
-            
-            if (progressLoader) {
-                progressLoader.style.opacity = '0';
-                setTimeout(() => {
-                    progressLoader.style.display = 'none';
                 }, 500);
             }
         }
@@ -841,7 +515,6 @@
             });
             
             loadSlide(currentSlide);
-            setTimeout(() => loadAdjacentSlides(), 100);
             restartAutoSlide();
         }
 
@@ -978,8 +651,8 @@
             window.location.href = 'index.html';
         }
 
-        // FIXED: Simplified initialization without complex detection
-        window.addEventListener('DOMContentLoaded', async function() {
+        // Simple initialization
+        window.addEventListener('DOMContentLoaded', function() {
             // Check for guest data
             const guestData = sessionStorage.getItem('currentGuest');
             if (!guestData) {
@@ -990,38 +663,11 @@
             currentGuest = JSON.parse(guestData);
             document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
             
-            // Quick connection detection (simplified)
-            updateLoadingStatus('Preparing your experience...');
-            updateLoadingProgress(10);
-            
-            // Simple connection check
-            if ('connection' in navigator) {
-                const conn = navigator.connection;
-                if (conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') {
-                    loadingStrategy = 'conservative';
-                    updateLoadingStatus('Optimizing for your connection...');
-                } else {
-                    loadingStrategy = 'adaptive';
-                    updateLoadingStatus('Loading beautiful memories...');
-                }
-            }
-            
-            // Initialize features
-            setTimeout(() => {
-                initializeCarousel();
-                updateLoadingProgress(30);
-            }, 500);
-            
-            setTimeout(() => {
-                updateRSVPStatus();
-                updateLoadingProgress(50);
-            }, 800);
-            
-            setTimeout(() => {
-                playWeddingMusic();
-                startFloatingHearts();
-                updateLoadingProgress(70);
-            }, 1200);
+            // Initialize everything
+            updateRSVPStatus();
+            initializeCarousel();
+            playWeddingMusic();
+            startFloatingHearts();
         });
 
         // Event listeners
@@ -1035,19 +681,17 @@
                 clearInterval(autoSlideInterval);
             } else {
                 restartAutoSlide();
-                if (loadedImages < totalImages) {
-                    setTimeout(() => loadAllSlides(), 1000);
-                }
             }
         });
 
-        const container = document.querySelector('.carousel-container');
-        if (container) {
-            container.addEventListener('mouseenter', () => {
-                clearInterval(autoSlideInterval);
-            });
-            container.addEventListener('mouseleave', () => restartAutoSlide());
-        }
+        // Hover pause
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.carousel-container');
+            if (container) {
+                container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+                container.addEventListener('mouseleave', () => restartAutoSlide());
+            }
+        });
 
         // Add confetti animation CSS
         const style = document.createElement('style');
@@ -1065,3 +709,6 @@
             clearInterval(autoSlideInterval);
             imageCache.clear();
         });
+    </script>
+</body>
+</html>
