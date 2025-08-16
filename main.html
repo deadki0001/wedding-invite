@@ -29,10 +29,10 @@
         .carousel-container {
             position: relative;
             width: 100%;
-            height: 400px;
+            height: 500px;
             overflow: hidden;
             border-radius: 0 0 20px 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
             margin-bottom: 2rem;
             background: rgba(255,255,255,0.6);
         }
@@ -40,29 +40,30 @@
         .carousel {
             display: flex;
             height: 100%;
-            transition: transform 0.6s cubic-bezier(.2,.8,.2,1);
+            transition: transform 0.8s cubic-bezier(.25,.8,.25,1);
             will-change: transform;
         }
 
         .carousel-slide {
-            display: flex;
             min-width: 100%;
             height: 100%;
-            gap: 10px;
-            padding: 10px;
-            align-items: stretch;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         .carousel-item {
-            flex: 1;
+            width: 100%;
             height: 100%;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            border-radius: 15px;
+            border-radius: 20px;
             position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-            transition: transform .3s ease, opacity .3s ease;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            transition: transform .4s ease, opacity .4s ease;
             background-color: var(--soft-pink);
             overflow: hidden;
         }
@@ -75,14 +76,22 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .carousel-item.loading::before {
             content: '💕';
-            font-size: 2rem;
+            font-size: 3rem;
             animation: pulse 1.5s infinite;
+        }
+
+        .carousel-item.loading::after {
+            content: 'Loading beautiful memories...';
+            font-size: 1rem;
+            opacity: 0.8;
         }
 
         @keyframes shimmer {
@@ -92,17 +101,17 @@
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
         }
 
         .carousel-item.loaded { 
             opacity: 1;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.8s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; filter: blur(5px); }
-            to { opacity: 1; filter: blur(0); }
+            from { opacity: 0; filter: blur(8px); transform: scale(1.05); }
+            to { opacity: 1; filter: blur(0); transform: scale(1); }
         }
 
         .carousel-item.error {
@@ -111,16 +120,24 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+            font-size: 1.2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .carousel-item.error::before {
+            content: '💕';
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .carousel-item::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.08) 100%);
-            border-radius: 15px;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.1) 100%);
+            border-radius: 20px;
             pointer-events: none;
         }
 
@@ -129,43 +146,74 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.95);
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.3s ease;
             z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            backdrop-filter: blur(10px);
         }
 
-        .carousel-nav:hover { background: var(--gold); color: white; transform: translateY(-50%) scale(1.06); }
+        .carousel-nav:hover { 
+            background: var(--gold); 
+            color: white; 
+            transform: translateY(-50%) scale(1.1); 
+            box-shadow: 0 12px 32px rgba(212,175,55,0.4);
+        }
 
-        .carousel-nav.prev { left: 16px; }
-        .carousel-nav.next { right: 16px; }
+        .carousel-nav.prev { left: 20px; }
+        .carousel-nav.next { right: 20px; }
 
         .carousel-dots {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-top: 12px;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
         }
 
         .dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            background: rgba(123, 30, 59, 0.28);
+            background: rgba(123, 30, 59, 0.3);
             cursor: pointer;
-            transition: transform 0.2s ease, background 0.2s ease;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .dot.active { background: var(--gold); transform: scale(1.2); }
+        .dot.active { 
+            background: var(--gold); 
+            transform: scale(1.3);
+            box-shadow: 0 0 12px rgba(212,175,55,0.5);
+        }
+
+        .dot:hover {
+            background: var(--rose);
+            transform: scale(1.1);
+        }
+
+        /* Photo counter */
+        .photo-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
 
         /* Main Content */
         .main-content {
@@ -226,12 +274,19 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .carousel-container { height: 300px; }
-            .carousel-slide { flex-direction: column; gap: 6px; }
-            .carousel-item { min-height: 90px; }
+            .carousel-container { height: 400px; }
+            .carousel-slide { padding: 15px; }
             .welcome-message h1 { font-size: 1.9rem; }
             .main-content { padding: 1rem; }
-            .carousel-nav { width: 40px; height: 40px; font-size: 20px; }
+            .carousel-nav { width: 50px; height: 50px; font-size: 24px; }
+            .carousel-nav.prev { left: 15px; }
+            .carousel-nav.next { right: 15px; }
+            .photo-counter { top: 15px; left: 15px; font-size: 0.8rem; }
+        }
+
+        @media (max-width: 480px) {
+            .carousel-container { height: 350px; }
+            .carousel-slide { padding: 10px; }
         }
 
         /* Simple loader */
@@ -283,6 +338,7 @@
 
     <!-- Photo Carousel -->
     <div class="carousel-container" aria-roledescription="carousel">
+        <div class="photo-counter" id="photoCounter">1 / 1</div>
         <button class="carousel-nav prev" aria-label="Previous" onclick="previousSlide()">‹</button>
         <button class="carousel-nav next" aria-label="Next" onclick="nextSlide()">›</button>
 
@@ -360,7 +416,6 @@
         let totalSlides = 0;
         let autoSlideInterval = null;
         let allPhotos = [];
-        let photoSlides = [];
         let loadedImages = 0;
         let totalImages = 0;
         const assetsBase = 'assets/';
@@ -384,39 +439,34 @@
             }
             
             totalImages = allPhotos.length;
+            totalSlides = allPhotos.length; // One photo per slide
 
-            // Group into slides of 3
-            photoSlides = [];
-            for (let i = 0; i < allPhotos.length; i += 3) {
-                photoSlides.push(allPhotos.slice(i, i + 3));
-            }
-            totalSlides = photoSlides.length;
-
-            // Create carousel HTML
+            // Create carousel HTML - one slide per photo
             const carousel = document.getElementById('photoCarousel');
             carousel.innerHTML = '';
 
-            photoSlides.forEach((slidePhotos, slideIndex) => {
+            allPhotos.forEach((photo, index) => {
                 const slide = document.createElement('div');
                 slide.className = 'carousel-slide';
-                slide.setAttribute('data-slide', slideIndex);
+                slide.setAttribute('data-slide', index);
 
-                slidePhotos.forEach((photo, photoIndex) => {
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item loading';
-                    item.setAttribute('data-photo', photo);
-                    item.setAttribute('role', 'img');
-                    item.setAttribute('aria-label', `Photo ${slideIndex * 3 + photoIndex + 1}`);
-                    slide.appendChild(item);
-                });
-
+                const item = document.createElement('div');
+                item.className = 'carousel-item loading';
+                item.setAttribute('data-photo', photo);
+                item.setAttribute('role', 'img');
+                item.setAttribute('aria-label', `Wedding photo ${index + 1} of ${totalImages}`);
+                
+                slide.appendChild(item);
                 carousel.appendChild(slide);
             });
 
             createDots();
+            updatePhotoCounter();
             
-            // Start loading first slide immediately
-            loadSlide(0);
+            // Start loading first few images immediately
+            loadImage(0);
+            if (totalSlides > 1) loadImage(1);
+            if (totalSlides > 2) loadImage(2);
             
             // Hide loader and start auto-slide
             setTimeout(() => {
@@ -424,29 +474,25 @@
                 startAutoSlide();
             }, 2000);
             
-            // Load remaining slides in background
+            // Load remaining images in background
             setTimeout(() => {
-                for (let i = 1; i < totalSlides; i++) {
-                    setTimeout(() => loadSlide(i), i * 500);
+                for (let i = 3; i < totalSlides; i++) {
+                    setTimeout(() => loadImage(i), (i - 3) * 300);
                 }
             }, 3000);
         }
 
-        function loadSlide(slideIndex) {
+        function loadImage(slideIndex) {
+            if (slideIndex >= totalSlides) return;
+            
             const slide = document.querySelector(`.carousel-slide[data-slide="${slideIndex}"]`);
             if (!slide) return;
 
-            const items = slide.querySelectorAll('.carousel-item.loading');
-            
-            items.forEach((item, index) => {
-                const photo = item.getAttribute('data-photo');
-                setTimeout(() => {
-                    loadImage(photo, item);
-                }, index * 200);
-            });
-        }
+            const item = slide.querySelector('.carousel-item.loading');
+            if (!item) return;
 
-        function loadImage(photo, item) {
+            const photo = item.getAttribute('data-photo');
+            
             if (imageCache.has(photo)) {
                 applyImage(item, imageCache.get(photo));
                 return;
@@ -458,8 +504,8 @@
             const timeout = setTimeout(() => {
                 item.classList.remove('loading');
                 item.classList.add('error');
-                item.textContent = '💕 Beautiful Memory';
-            }, 10000);
+                item.textContent = 'Beautiful Memory';
+            }, 12000);
 
             img.onload = function() {
                 clearTimeout(timeout);
@@ -471,7 +517,7 @@
                 clearTimeout(timeout);
                 item.classList.remove('loading');
                 item.classList.add('error');
-                item.textContent = '💕 Beautiful Memory';
+                item.textContent = 'Beautiful Memory';
             };
             
             img.src = photoUrl;
@@ -497,13 +543,49 @@
             const dotsContainer = document.getElementById('carouselDots');
             dotsContainer.innerHTML = '';
             
-            for (let i = 0; i < totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                if (i === 0) dot.classList.add('active');
-                dot.addEventListener('click', () => goToSlide(i));
-                dotsContainer.appendChild(dot);
+            // Limit dots to prevent overcrowding on mobile
+            const maxDotsToShow = window.innerWidth < 768 ? 10 : 15;
+            const showDots = Math.min(totalSlides, maxDotsToShow);
+            
+            if (totalSlides <= maxDotsToShow) {
+                // Show all dots
+                for (let i = 0; i < totalSlides; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    if (i === 0) dot.classList.add('active');
+                    dot.setAttribute('aria-label', `Go to photo ${i + 1}`);
+                    dot.addEventListener('click', () => goToSlide(i));
+                    dotsContainer.appendChild(dot);
+                }
+            } else {
+                // Show simplified dots with current position indicator
+                for (let i = 0; i < showDots; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    dotsContainer.appendChild(dot);
+                }
+                updateSimplifiedDots();
             }
+        }
+
+        function updateSimplifiedDots() {
+            const dots = document.querySelectorAll('.dot');
+            const maxDots = dots.length;
+            
+            if (totalSlides <= maxDots) return;
+            
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Calculate which dot should be active based on current position
+            const activeIndex = Math.floor((currentSlide / totalSlides) * maxDots);
+            if (dots[activeIndex]) {
+                dots[activeIndex].classList.add('active');
+            }
+        }
+
+        function updatePhotoCounter() {
+            const counter = document.getElementById('photoCounter');
+            counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
         }
 
         function nextSlide() {
@@ -525,16 +607,28 @@
             const carousel = document.getElementById('photoCarousel');
             carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
             
-            document.querySelectorAll('.dot').forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentSlide);
-            });
+            // Update dots
+            const dots = document.querySelectorAll('.dot');
+            if (totalSlides <= dots.length) {
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+            } else {
+                updateSimplifiedDots();
+            }
             
-            loadSlide(currentSlide);
+            updatePhotoCounter();
+            
+            // Preload next and previous images
+            loadImage(currentSlide);
+            loadImage((currentSlide + 1) % totalSlides);
+            loadImage((currentSlide - 1 + totalSlides) % totalSlides);
+            
             restartAutoSlide();
         }
 
         function startAutoSlide() {
-            autoSlideInterval = setInterval(nextSlide, 4000);
+            autoSlideInterval = setInterval(nextSlide, 5000); // Slower for single images
         }
 
         function restartAutoSlide() {
@@ -559,7 +653,6 @@
                 
                 if (result.success) {
                     currentGuest.rsvp_status = status;
-                    sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
                     updateRSVPStatus();
                     
                     if (status === 'accepted') {
@@ -575,7 +668,6 @@
                 console.warn('RSVP API failed, using offline mode:', error);
                 
                 currentGuest.rsvp_status = status;
-                sessionStorage.setItem('currentGuest', JSON.stringify(currentGuest));
                 updateRSVPStatus();
                 
                 if (status === 'accepted') {
@@ -628,7 +720,7 @@
             setTimeout(() => confetti.remove(), 6000);
         }
 
-        function startFloatingHearts() {
+function startFloatingHearts() {
             setInterval(() => {
                 const heart = document.createElement('div');
                 heart.className = 'heart';
@@ -671,11 +763,12 @@
             // Check for guest data
             const guestData = sessionStorage.getItem('currentGuest');
             if (!guestData) {
-                window.location.href = 'index.html';
-                return;
+                // For demo purposes, create a mock guest
+                currentGuest = { name: 'Beautiful Soul', rsvp_status: null };
+            } else {
+                currentGuest = JSON.parse(guestData);
             }
             
-            currentGuest = JSON.parse(guestData);
             document.getElementById('guestName').textContent = currentGuest.name || 'Beautiful Soul';
             
             // Initialize everything
